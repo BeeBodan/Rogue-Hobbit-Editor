@@ -1,5 +1,6 @@
 #define SFML_NO_DEPRECATED_WARNINGS
 #include<SFML/Graphics.hpp>
+#include "wtypes.h"
 #include<iostream>
 #include<sstream>
 #include<conio.h>
@@ -10,9 +11,24 @@
 #include <vector>
 #include <list>
 
+
 using namespace sf;
 using namespace std;
 
+//=============================Get the horizontal and vertical screen sizes in pixel============================
+void GetDesktopResolution(int& horizontal, int& vertical)
+{
+	RECT desktop;
+	// Get a handle to the desktop window
+	const HWND hDesktop = GetDesktopWindow();
+	// Get the size of screen to the variable desktop
+	GetWindowRect(hDesktop, &desktop);
+	// The top left corner will have coordinates (0,0)
+	// and the bottom right corner will have coordinates
+	// (horizontal, vertical)
+	horizontal = desktop.right;
+	vertical = desktop.bottom;
+}
 
 //===================================================MAIN CLASS==================================================
 class MainClass
@@ -324,12 +340,19 @@ public:
 	}
 };
 
+
+
+
 //==============================================================================================================
 //===================================================MAIN PART==================================================
 //==============================================================================================================
 int main()
 {
-	RenderWindow window(VideoMode(1280, 800), "HobbiRogueEdition");
+	int horizontal = 0;
+	int vertical = 0;
+	GetDesktopResolution(horizontal, vertical);
+
+	RenderWindow window(VideoMode(horizontal, vertical), "HobbitRogueEdition", Style::Fullscreen);
 	viewCamera.reset(FloatRect(0, 0, 640, 480));
 
 	//_________text for 'Press TAB'________
