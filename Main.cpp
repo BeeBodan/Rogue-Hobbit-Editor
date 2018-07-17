@@ -19,7 +19,7 @@ class MainClass
 {
 public:
 	vector<Object> obj;
-	float x, y, dx, dy, speed, Timer;
+	float x, y, dx, dy, speed, TimerEnemy, TimerHobbit;
 	int w, h, health;
 	bool life;
 	Texture texture;
@@ -29,7 +29,7 @@ public:
 	MainClass(Image &image, float X, float Y, int W, int H, String Name)
 	{
 		x = X, y = Y; w = W; h = H; name = Name;
-		Timer = 0; speed = 0; dx = 0; dy = 0;
+		TimerEnemy = 0; TimerHobbit = 0; speed = 0; dx = 0; dy = 0;
 		health = 100; life = true;
 		texture.loadFromImage(image);
 		sprite.setTexture(texture);
@@ -51,6 +51,7 @@ class Class_Hero :public MainClass
 public:
 	enum { left, right, up, down, stay } state;
 	int stonesPoint, elixir;
+	bool  cooldawn = false;
 
 	Class_Hero(Image &image, Level &lvl, float X, float Y, int W, int H, String Name) :MainClass(image, X, Y, W, H, Name)     //lvl!!!!!
 	{
@@ -124,6 +125,12 @@ public:
 
 		speed = 0;
 
+		TimerHobbit += time;
+		if (TimerHobbit > 3000)
+		{
+			cooldawn = true;
+		}
+
 		sprite.setPosition(x + w / 2, y + h / 2);
 		if (health <= 0) { life = false; }
 		if (life) { getPlayerCoordXY(x, y); }
@@ -141,9 +148,8 @@ public:
 		obj = lvl.GetObjects("solid");
 		if (name == "Enemy1" || name == "Enemy2")
 		{
-			sprite.setTextureRect(IntRect(99, 0, w, h));
-			dx = 0.05;
-			dy = 0.05;
+			dx = -0.05;
+			dy = -0.05;
 		}
 	}
 
@@ -168,11 +174,12 @@ public:
 	{
 		if (name == "Enemy1")
 		{
+			sprite.setTextureRect(IntRect(800, 96, w, h));
 
-			Timer += time;
-			if (Timer > 3000)
+			TimerEnemy += time;
+			if (TimerEnemy > 3000)
 			{
-				dx *= -1; Timer = 0;
+				dx *= -1; TimerEnemy = 0;
 				sprite.scale(-1, 1);
 			}
 
@@ -184,11 +191,12 @@ public:
 		}
 		if (name == "Enemy2")
 		{
+			sprite.setTextureRect(IntRect(768, 96, w, h));
 
-			Timer += time;
-			if (Timer > 3000)
+			TimerEnemy += time;
+			if (TimerEnemy > 4000)
 			{
-				dy *= -1; Timer = 0;
+				dy *= -1; TimerEnemy = 0;
 				sprite.scale(-1, 1);
 			}
 
@@ -207,23 +215,73 @@ class Class_Things :public MainClass
 public:
 	Class_Things(Image &image, Level &lvl, float X, float Y, int W, int H, String Name) :MainClass(image, X, Y, W, H, Name)
 	{
-		
+
 	}
 
 	void update(float time)
 	{
 		if (name == "SimpleStone")
 		{
-			sprite.setTextureRect(IntRect(66, 0, w, h));
+			sprite.setTextureRect(IntRect(608, 767, w, h));
 			sprite.setPosition(x + w / 2, y + h / 2);
 			if (health <= 0) { life = false; }
 		}
 		if (name == "elixirHP")
 		{
-			sprite.setTextureRect(IntRect(33, 0, w, h));
+			sprite.setTextureRect(IntRect(65, 800, w, h));
 			sprite.setPosition(x + w / 2, y + h / 2);
 			if (health <= 0) { life = false; }
 		}
+	}
+};
+
+
+class Class_Shooting :public MainClass
+{
+public:
+	int line; //direction shoot
+
+	Class_Shooting(Image &image, Level &lvl, float X, float Y, int W, int H, String Name, int dir) :MainClass(image, X, Y, W, H, Name)
+	{
+		obj = lvl.GetObjects("solid");
+		x = X;
+		y = Y;
+		w = 22, h = 14;
+		line = dir;
+		speed = 0.5;
+		life = true;
+	}
+
+
+
+	void update(float time)
+	{
+		switch (line)
+		{
+		case 0: dx = -speed; dy = 0; break;
+		case 1: dx = speed; dy = 0; break;
+		case 2: dx = 0; dy = speed; break;
+		case 3: dx = 0; dy = -speed; break;
+		default:
+			break;
+		}
+
+		x += dx * time;
+		y += dy * time;
+
+		for (int i = 0; i < obj.size(); i++)
+		{
+			if (getRect().intersects(obj[i].rect))
+			{
+				if (obj[i].name == "solid")
+				{
+					life = false;
+				}
+			}
+		}
+
+		sprite.setTextureRect(IntRect(0, 0, w, h));
+		sprite.setPosition(x + w / 2, y + h / 2);
 	}
 };
 
@@ -343,17 +401,21 @@ int main()
 	heroImage.loadFromFile("images/CallMHero3.png");
 
 	Image easyEnemyImage;
-	easyEnemyImage.loadFromFile("images/map5.png");
+	easyEnemyImage.loadFromFile("images/object.png");
 
 	Image simpleStone;                             //TEMPORALLY, soon delete this!
-	simpleStone.loadFromFile("images/map5.png");
+	simpleStone.loadFromFile("images/object.png");
+
+	Image shooting;
+	shooting.loadFromFile("images/shoot.png");
 
 
 	//=================================================CLASS DECLARATION================================================
 	list<MainClass*> bigList;
 	list<MainClass*>::iterator Iterator;
+	list<MainClass*>::iterator Iterator2;
 
-	vector<Object> enemis, enemis2, stones, elixirHP;
+	vector<Object> enemis, enemis2, stones, elixirHP, shoot;
 
 	enemis = lvl.GetObjects("easyEnemy");
 	for (int i = 0; i < enemis.size(); i++)
@@ -451,6 +513,22 @@ int main()
 						break;
 					}
 				}
+
+			//_____________Space(FIRE)____________
+			if (event.type == Event::KeyPressed)
+				if (event.key.code == Keyboard::Space)
+				{
+					if (Hobbit.stonesPoint >= 1)
+					{
+						if (Hobbit.cooldawn == true)
+						{
+							bigList.push_back(new Class_Shooting(shooting, lvl, Hobbit.x, Hobbit.y, 22, 14, "ShootStone", Hobbit.state));
+							Hobbit.stonesPoint--;
+							Hobbit.TimerHobbit = 0; Hobbit.cooldawn = false;
+						}
+						
+					}
+				}
 		}
 
 		//===================================================FRAME SPRITE==================================================
@@ -500,7 +578,7 @@ int main()
 		//________________Main Logic_________________
 		for (Iterator = bigList.begin(); Iterator != bigList.end();)
 		{
-			MainClass *all = *Iterator;
+			MainClass *all = *Iterator; //(*Iterator)->
 			all->update(time);
 			if (all->life == false)
 			{
@@ -519,6 +597,13 @@ int main()
 					Hobbit.health -= 35;
 					(*Iterator)->health = 0;
 				}
+				/*for (Iterator2 = bigList.begin(); Iterator2 != bigList.end(); Iterator2++)
+				{
+					if ((*Iterator)->name == "ShootStone")
+					{
+
+					}
+				}*/
 			}
 		}
 		//________________Logic for Enemy2_____________
@@ -529,7 +614,7 @@ int main()
 				if ((*Iterator)->name == "Enemy2")
 				{
 					(*Iterator)->dx = 0;
-					Hobbit.health -= 35;
+					Hobbit.health -= 50;
 					(*Iterator)->health = 0;
 				}
 			}
@@ -561,6 +646,7 @@ int main()
 				}
 			}
 		}
+
 
 
 		//===================================================MAIN DRAW==================================================
