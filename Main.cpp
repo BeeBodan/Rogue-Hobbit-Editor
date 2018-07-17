@@ -51,7 +51,7 @@ class Class_Hero :public MainClass
 public:
 	enum { left, right, up, down, stay } state;
 	int stonesPoint, elixir;
-	bool  cooldawn = false;
+	bool  cooldown = false;
 
 	Class_Hero(Image &image, Level &lvl, float X, float Y, int W, int H, String Name) :MainClass(image, X, Y, W, H, Name)     //lvl!!!!!
 	{
@@ -128,7 +128,7 @@ public:
 		TimerHobbit += time;
 		if (TimerHobbit > 3000)
 		{
-			cooldawn = true;
+			cooldown = true;
 		}
 
 		sprite.setPosition(x + w / 2, y + h / 2);
@@ -235,7 +235,7 @@ public:
 	}
 };
 
-
+//===================================================CLASS SHOOTING==================================================
 class Class_Shooting :public MainClass
 {
 public:
@@ -415,7 +415,7 @@ int main()
 	list<MainClass*>::iterator Iterator;
 	list<MainClass*>::iterator Iterator2;
 
-	vector<Object> enemis, enemis2, stones, elixirHP, shoot;
+	vector<Object> enemis, enemis2, stones, elixirHP;
 
 	enemis = lvl.GetObjects("easyEnemy");
 	for (int i = 0; i < enemis.size(); i++)
@@ -491,44 +491,50 @@ int main()
 				}
 
 			//_____________T(elixir)____________
-			if (event.type == Event::KeyPressed)
-				if (event.key.code == Keyboard::T)
-				{
-					for (int i = Hobbit.elixir; i > 0; i++)
+			if (Hobbit.life == true)
+			{
+				if (event.type == Event::KeyPressed)
+					if (event.key.code == Keyboard::T)
 					{
-						if (Hobbit.health > 80)
+						for (int i = Hobbit.elixir; i > 0; i++)
 						{
-							Hobbit.health = 100;
-							Hobbit.elixir--;
-							cout << "Bottles: " << Hobbit.elixir << endl;
-							cout << "+20 health!" << endl;
+							if (Hobbit.health > 80)
+							{
+								Hobbit.health = 100;
+								Hobbit.elixir--;
+								cout << "Bottles: " << Hobbit.elixir << endl;
+								cout << "+20 health!" << endl;
+							}
+							else
+							{
+								Hobbit.health += 20;
+								Hobbit.elixir--;
+								cout << "Bottles: " << Hobbit.elixir << endl;
+								cout << "+20 health!" << endl;
+							}
+							break;
 						}
-						else
-						{
-							Hobbit.health += 20;
-							Hobbit.elixir--;
-							cout << "Bottles: " << Hobbit.elixir << endl;
-							cout << "+20 health!" << endl;
-						}
-						break;
 					}
-				}
+			}
 
 			//_____________Space(FIRE)____________
-			if (event.type == Event::KeyPressed)
-				if (event.key.code == Keyboard::Space)
-				{
-					if (Hobbit.stonesPoint >= 1)
+			if (Hobbit.life == true)
+			{
+				if (event.type == Event::KeyPressed)
+					if (event.key.code == Keyboard::Space)
 					{
-						if (Hobbit.cooldawn == true)
+						if (Hobbit.stonesPoint >= 1)
 						{
-							bigList.push_back(new Class_Shooting(shooting, lvl, Hobbit.x, Hobbit.y, 22, 14, "ShootStone", Hobbit.state));
-							Hobbit.stonesPoint--;
-							Hobbit.TimerHobbit = 0; Hobbit.cooldawn = false;
+							if (Hobbit.cooldown == true)
+							{
+								bigList.push_back(new Class_Shooting(shooting, lvl, Hobbit.x, Hobbit.y, 22, 14, "ShootStone", Hobbit.state));
+								Hobbit.stonesPoint--;
+								Hobbit.TimerHobbit = 0; Hobbit.cooldown = false;
+							}
+
 						}
-						
 					}
-				}
+			}
 		}
 
 		//===================================================FRAME SPRITE==================================================
@@ -586,7 +592,7 @@ int main()
 			}
 			else Iterator++;
 		}
-		//________________Logic for Enemy1_____________
+		//________________Logic for Enemy_____________
 		for (Iterator = bigList.begin(); Iterator != bigList.end(); Iterator++)
 		{
 			if ((*Iterator)->getRect().intersects(Hobbit.getRect()))
@@ -597,25 +603,22 @@ int main()
 					Hobbit.health -= 35;
 					(*Iterator)->health = 0;
 				}
-				/*for (Iterator2 = bigList.begin(); Iterator2 != bigList.end(); Iterator2++)
-				{
-					if ((*Iterator)->name == "ShootStone")
-					{
-
-					}
-				}*/
-			}
-		}
-		//________________Logic for Enemy2_____________
-		for (Iterator = bigList.begin(); Iterator != bigList.end(); Iterator++)
-		{
-			if ((*Iterator)->getRect().intersects(Hobbit.getRect()))
-			{
 				if ((*Iterator)->name == "Enemy2")
 				{
 					(*Iterator)->dx = 0;
 					Hobbit.health -= 50;
 					(*Iterator)->health = 0;
+				}
+			}
+			for (Iterator2 = bigList.begin(); Iterator2 != bigList.end(); Iterator2++)
+			{
+				if ((*Iterator)->getRect() != (*Iterator2)->getRect())
+				{
+					if (((*Iterator)->getRect().intersects((*Iterator2)->getRect())) && ((*Iterator)->name == "Enemy1" || "Enemy2") && ((*Iterator2)->name == "ShootStone"))
+					{
+						(*Iterator)->health = 0;
+						(*Iterator2)->life = false;
+					}
 				}
 			}
 		}
