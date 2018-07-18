@@ -10,6 +10,7 @@
 #include "TinyXML/tinyxml.h"
 #include <vector>
 #include <list>
+#include "menu.h"
 
 
 using namespace sf;
@@ -354,6 +355,9 @@ int main()
 
 	RenderWindow window(VideoMode(horizontal, vertical), "HobbitRogueEdition", Style::Fullscreen);
 	viewCamera.reset(FloatRect(0, 0, 640, 480));
+	
+	//_________Menu Function________
+	Menu menu(window.getSize().x, window.getSize().y); 
 
 	//_________text for 'Press TAB'________
 	Font font0;
@@ -473,277 +477,327 @@ int main()
 
 	while (window.isOpen())
 	{
-
-		float time = clock.getElapsedTime().asMicroseconds();
-
-		clock.restart();
-		time = time / 800;
-
 		Event event;
+
 		while (window.pollEvent(event))
 		{
-			if (event.type == sf::Event::Closed)
-				window.close();
-			//_____________TAB______________
-			if (event.type == Event::KeyPressed)
-				if ((event.key.code == Keyboard::Tab))
-				{
-					switch (showMissionText)
-					{
-					case true:
-					{
-						ostringstream PlayerHealth;
-						PlayerHealth << Hobbit.health;
-						ostringstream scoreString;
-						scoreString << Hobbit.stonesPoint;
-						ostringstream Mission;
-						Mission << GetMissionText(GetMission(Hobbit.x));
-						text.setString("Hobbit:" "\n" "      ''Name''" "\n" "Health: " "\n"
-							"Elixir: "  "\n"  "Stones: " + scoreString.str() + "\n");
-						text2.setString(Mission.str());
-						showMissionText = false;
-						break;
-					}
-					case false:
-					{
-						//text2.setString("");
-						showMissionText = true;
-						break;
-					}
-					}
-				}
-
-			//_____________T(elixir)____________
-			if (Hobbit.life == true)
+			switch (event.type)
 			{
-				if (event.type == Event::KeyPressed)
-					if (event.key.code == Keyboard::T)
+			case Event::KeyReleased:
+				switch (event.key.code)
+				{
+				case Keyboard::Up:
+					menu.MoveUp();
+					break;
+
+				case Keyboard::Down:
+					menu.MoveDown();
+					break;
+
+				case Keyboard::Return:
+					switch (menu.GetPressedItem())
 					{
-						for (int i = Hobbit.elixir; i > 0; i++)
+					case 0:
+						while (window.isOpen())
 						{
-							if (Hobbit.health > 80)
+							float time = clock.getElapsedTime().asMicroseconds();
+
+							clock.restart();
+							time = time / 800;
+
+							Event event;
+
+							while (window.pollEvent(event))
 							{
-								Hobbit.health = 100;
-								Hobbit.elixir--;
-								cout << "Bottles: " << Hobbit.elixir << endl;
-								cout << "+20 health!" << endl;
+								if (event.type == sf::Event::Closed)
+									window.close();
+
+								//_____________TAB______________
+								if (event.type == Event::KeyPressed)
+									if ((event.key.code == Keyboard::Tab))
+									{
+										switch (showMissionText)
+										{
+										case true:
+										{
+											ostringstream PlayerHealth;
+											PlayerHealth << Hobbit.health;
+											ostringstream scoreString;
+											scoreString << Hobbit.stonesPoint;
+											ostringstream Mission;
+											Mission << GetMissionText(GetMission(Hobbit.x));
+											text.setString("Hobbit:" "\n" "      ''Name''" "\n" "Health: " "\n"
+												"Elixir: "  "\n"  "Stones: " + scoreString.str() + "\n");
+											text2.setString(Mission.str());
+											showMissionText = false;
+											break;
+										}
+										case false:
+										{
+											//text2.setString("");
+											showMissionText = true;
+											break;
+										}
+										}
+									}
+
+								//_____________T(elixir)____________
+								if (Hobbit.life == true)
+								{
+									if (event.type == Event::KeyPressed)
+										if (event.key.code == Keyboard::T)
+										{
+											for (int i = Hobbit.elixir; i > 0; i++)
+											{
+												if (Hobbit.health > 80)
+												{
+													Hobbit.health = 100;
+													Hobbit.elixir--;
+													cout << "Bottles: " << Hobbit.elixir << endl;
+													cout << "+20 health!" << endl;
+												}
+												else
+												{
+													Hobbit.health += 20;
+													Hobbit.elixir--;
+													cout << "Bottles: " << Hobbit.elixir << endl;
+													cout << "+20 health!" << endl;
+												}
+												break;
+											}
+										}
+								}
+
+								//_____________Space(FIRE)____________
+								if (Hobbit.life == true)
+								{
+									if (event.type == Event::KeyPressed)
+										if (event.key.code == Keyboard::Space)
+										{
+											if (Hobbit.stonesPoint >= 1)
+											{
+												if (Hobbit.cooldown == true)
+												{
+													bigList.push_back(new Class_Shooting(shooting, lvl, Hobbit.x, Hobbit.y, 22, 14, "ShootStone", Hobbit.state));
+													Hobbit.stonesPoint--;
+													Hobbit.TimerHobbit = 0; Hobbit.cooldown = false;
+												}
+
+											}
+										}
+								}
+							}
+
+							//===================================================FRAME SPRITE==================================================
+
+							if (Hobbit.life == true)
+							{
+								if (Hobbit.state == Hobbit.left) { Hobbit.sprite.setTextureRect(IntRect(0, 33, 32, 32)); }
+								if (Hobbit.state == Hobbit.right) { Hobbit.sprite.setTextureRect(IntRect(0, 0, 32, 32)); }
+								if (Hobbit.state == Hobbit.up) { Hobbit.sprite.setTextureRect(IntRect(0, 0, 32, 32)); }
+								if (Hobbit.state == Hobbit.down) { Hobbit.sprite.setTextureRect(IntRect(0, 66, 32, 32)); }
+
+								if (Keyboard::isKeyPressed(Keyboard::A))
+								{
+									frame += 0.005 * time;
+									if (frame > 5) frame -= 5;
+									Hobbit.sprite.setTextureRect(IntRect(32 * int(frame), 33, 32, 32));
+								}
+								if (Keyboard::isKeyPressed(Keyboard::D))
+								{
+									frame += 0.005 * time;
+									if (frame > 5) frame -= 5;
+									Hobbit.sprite.setTextureRect(IntRect(32 * int(frame), 0, 32, 32));
+								}
+								if (Keyboard::isKeyPressed(Keyboard::W))
+								{
+									frame += 0.005 * time;
+									if (frame > 5) frame -= 5;
+									Hobbit.sprite.setTextureRect(IntRect(32 * int(frame), 66, 32, 32));
+								}
+								if (Keyboard::isKeyPressed(Keyboard::S))
+								{
+									frame += 0.005 * time;
+									if (frame > 5) frame -= 5;
+									Hobbit.sprite.setTextureRect(IntRect(32 * int(frame), 0, 32, 32));
+								}
 							}
 							else
 							{
-								Hobbit.health += 20;
-								Hobbit.elixir--;
-								cout << "Bottles: " << Hobbit.elixir << endl;
-								cout << "+20 health!" << endl;
+								text3.setString("You Died");
+								text3.setPosition(viewCamera.getCenter().x - 200, viewCamera.getCenter().y - 90);
+								Hobbit.sprite.setTextureRect(IntRect(0, 98, 32, 32));
 							}
-							break;
-						}
-					}
-			}
 
-			//_____________Space(FIRE)____________
-			if (Hobbit.life == true)
-			{
-				if (event.type == Event::KeyPressed)
-					if (event.key.code == Keyboard::Space)
-					{
-						if (Hobbit.stonesPoint >= 1)
-						{
-							if (Hobbit.cooldown == true)
+							//================================================MAIN LOGIC FOR ALL (UPDATE)===============================================
+							Hobbit.update(time);
+
+							//________________Main Logic_________________
+							for (Iterator = bigList.begin(); Iterator != bigList.end();)
 							{
-								bigList.push_back(new Class_Shooting(shooting, lvl, Hobbit.x, Hobbit.y, 22, 14, "ShootStone", Hobbit.state));
-								Hobbit.stonesPoint--;
-								Hobbit.TimerHobbit = 0; Hobbit.cooldown = false;
+								MainClass *all = *Iterator; //(*Iterator)->
+								all->update(time);
+								if (all->life == false)
+								{
+									Iterator = bigList.erase(Iterator); delete all;
+								}
+								else Iterator++;
+							}
+							//________________Logic for Enemy_____________
+							for (Iterator = bigList.begin(); Iterator != bigList.end(); Iterator++)
+							{
+								if ((*Iterator)->getRect().intersects(Hobbit.getRect()))
+								{
+									if ((*Iterator)->name == "Enemy1")
+									{
+										(*Iterator)->dx = 0;
+										Hobbit.health -= 35;
+										(*Iterator)->health = 0;
+									}
+									if ((*Iterator)->name == "Enemy2")
+									{
+										(*Iterator)->dx = 0;
+										Hobbit.health -= 50;
+										(*Iterator)->health = 0;
+									}
+								}
+								for (Iterator2 = bigList.begin(); Iterator2 != bigList.end(); Iterator2++)
+								{
+									if ((*Iterator)->getRect() != (*Iterator2)->getRect())
+									{
+										if (((*Iterator)->getRect().intersects((*Iterator2)->getRect())) && ((*Iterator)->name == "Enemy1" || "Enemy2") && ((*Iterator2)->name == "ShootStone"))
+										{
+											(*Iterator)->health = 0;
+											(*Iterator2)->life = false;
+										}
+									}
+								}
+							}
+							//_______________Logic for Stone________________
+							for (Iterator = bigList.begin(); Iterator != bigList.end(); Iterator++)
+							{
+								if ((*Iterator)->getRect().intersects(Hobbit.getRect()))
+								{
+									if ((*Iterator)->name == "SimpleStone")
+									{
+										Hobbit.stonesPoint += 1;
+										(*Iterator)->health = 0;
+									}
+								}
+							}
+							//_______________Logic for ElixirHP________________
+							for (Iterator = bigList.begin(); Iterator != bigList.end(); Iterator++)
+							{
+								if ((*Iterator)->getRect().intersects(Hobbit.getRect()))
+								{
+									if ((*Iterator)->name == "elixirHP")
+									{
+										if (Hobbit.elixir < 5)
+										{
+											Hobbit.elixir += 1;
+											(*Iterator)->health = 0;
+										}
+									}
+								}
 							}
 
+
+
+							//===================================================MAIN DRAW==================================================
+							window.setView(viewCamera);
+							window.clear(Color(77, 83, 140));
+							lvl.Draw(window);
+
+							//Draw all sprites
+							for (Iterator = bigList.begin(); Iterator != bigList.end(); Iterator++)
+							{
+								window.draw((*Iterator)->sprite);
+							}
+
+							window.draw(Hobbit.sprite);
+
+							if (!showMissionText)
+							{
+								HealthBarHobbit.update(Hobbit.health);
+								text.setPosition(viewCamera.getCenter().x - 8, viewCamera.getCenter().y - 210);
+								text2.setPosition(viewCamera.getCenter().x + 110, viewCamera.getCenter().y - 210);
+								InfoMission_sprite.setPosition(viewCamera.getCenter().x - 40, viewCamera.getCenter().y - 235);
+								window.draw(InfoMission_sprite);
+								HealthBarHobbit.draw(window);
+								window.draw(text);
+								window.draw(text2);
+
+
+								if (Hobbit.elixir == 0)
+								{
+									sprite_elixir0.setTextureRect(IntRect(0, 0, 88, 22));
+									sprite_elixir0.setPosition(viewCamera.getCenter().x + 45, viewCamera.getCenter().y - 145);
+									window.draw(sprite_elixir0);
+								}
+								if (Hobbit.elixir == 1)
+								{
+									sprite_elixir1.setTextureRect(IntRect(0, 0, 88, 22));
+									sprite_elixir1.setPosition(viewCamera.getCenter().x + 45, viewCamera.getCenter().y - 145);
+									window.draw(sprite_elixir1);
+								}
+								if (Hobbit.elixir == 2)
+								{
+									sprite_elixir2.setTextureRect(IntRect(0, 0, 88, 22));
+									sprite_elixir2.setPosition(viewCamera.getCenter().x + 45, viewCamera.getCenter().y - 145);
+									window.draw(sprite_elixir2);
+								}
+								if (Hobbit.elixir == 3)
+								{
+									sprite_elixir3.setTextureRect(IntRect(0, 0, 88, 22));
+									sprite_elixir3.setPosition(viewCamera.getCenter().x + 45, viewCamera.getCenter().y - 145);
+									window.draw(sprite_elixir3);
+								}
+								if (Hobbit.elixir == 4)
+								{
+									sprite_elixir4.setTextureRect(IntRect(0, 0, 88, 22));
+									sprite_elixir4.setPosition(viewCamera.getCenter().x + 45, viewCamera.getCenter().y - 145);
+									window.draw(sprite_elixir4);
+								}
+								if (Hobbit.elixir == 5)
+								{
+									sprite_elixir5.setTextureRect(IntRect(0, 0, 88, 22));
+									sprite_elixir5.setPosition(viewCamera.getCenter().x + 45, viewCamera.getCenter().y - 145);
+									window.draw(sprite_elixir5);
+								}
+							}
+
+							text0.setString("Press 'TAB' to see your menu");
+							text0.setPosition(viewCamera.getCenter().x + 50, viewCamera.getCenter().y + 220);
+
+							window.draw(text0);
+							window.draw(text3);
+							window.display();
 						}
+						break;
+					case 1:
+						std::cout << "Option Button has been pressed" << std::endl;
+						break;
+					case 2:
+						window.close();
+						break;
 					}
-			}
-		}
 
-		//===================================================FRAME SPRITE==================================================
-
-		if (Hobbit.life == true)
-		{
-			if (Hobbit.state == Hobbit.left) { Hobbit.sprite.setTextureRect(IntRect(0, 33, 32, 32)); }
-			if (Hobbit.state == Hobbit.right) { Hobbit.sprite.setTextureRect(IntRect(0, 0, 32, 32)); }
-			if (Hobbit.state == Hobbit.up) { Hobbit.sprite.setTextureRect(IntRect(0, 0, 32, 32)); }
-			if (Hobbit.state == Hobbit.down) { Hobbit.sprite.setTextureRect(IntRect(0, 66, 32, 32)); }
-
-			if (Keyboard::isKeyPressed(Keyboard::A))
-			{
-				frame += 0.005 * time;
-				if (frame > 5) frame -= 5;
-				Hobbit.sprite.setTextureRect(IntRect(32 * int(frame), 33, 32, 32));
-			}
-			if (Keyboard::isKeyPressed(Keyboard::D))
-			{
-				frame += 0.005 * time;
-				if (frame > 5) frame -= 5;
-				Hobbit.sprite.setTextureRect(IntRect(32 * int(frame), 0, 32, 32));
-			}
-			if (Keyboard::isKeyPressed(Keyboard::W))
-			{
-				frame += 0.005 * time;
-				if (frame > 5) frame -= 5;
-				Hobbit.sprite.setTextureRect(IntRect(32 * int(frame), 66, 32, 32));
-			}
-			if (Keyboard::isKeyPressed(Keyboard::S))
-			{
-				frame += 0.005 * time;
-				if (frame > 5) frame -= 5;
-				Hobbit.sprite.setTextureRect(IntRect(32 * int(frame), 0, 32, 32));
-			}
-		}
-		else
-		{
-			text3.setString("You Died");
-			text3.setPosition(viewCamera.getCenter().x - 200, viewCamera.getCenter().y - 90);
-			Hobbit.sprite.setTextureRect(IntRect(0, 98, 32, 32));
-		}
-
-		//================================================MAIN LOGIC FOR ALL (UPDATE)===============================================
-		Hobbit.update(time);
-
-		//________________Main Logic_________________
-		for (Iterator = bigList.begin(); Iterator != bigList.end();)
-		{
-			MainClass *all = *Iterator; //(*Iterator)->
-			all->update(time);
-			if (all->life == false)
-			{
-			Iterator = bigList.erase(Iterator); delete all;
-			}
-			else Iterator++;
-		}
-		//________________Logic for Enemy_____________
-		for (Iterator = bigList.begin(); Iterator != bigList.end(); Iterator++)
-		{
-			if ((*Iterator)->getRect().intersects(Hobbit.getRect()))
-			{
-				if ((*Iterator)->name == "Enemy1")
-				{
-					(*Iterator)->dx = 0;
-					Hobbit.health -= 35;
-					(*Iterator)->health = 0;
+					break;
 				}
-				if ((*Iterator)->name == "Enemy2")
-				{
-					(*Iterator)->dx = 0;
-					Hobbit.health -= 50;
-					(*Iterator)->health = 0;
-				}
-			}
-			for (Iterator2 = bigList.begin(); Iterator2 != bigList.end(); Iterator2++)
-			{
-				if ((*Iterator)->getRect() != (*Iterator2)->getRect())
-				{
-					if (((*Iterator)->getRect().intersects((*Iterator2)->getRect())) && ((*Iterator)->name == "Enemy1" || "Enemy2") && ((*Iterator2)->name == "ShootStone"))
-					{
-						(*Iterator)->health = 0;
-						(*Iterator2)->life = false;
-					}
-				}
+
+				break;
+			case Event::Closed:
+				window.close();
+
+				break;
 			}
 		}
-		//_______________Logic for Stone________________
-		for (Iterator = bigList.begin(); Iterator != bigList.end(); Iterator++)
-		{
-			if ((*Iterator)->getRect().intersects(Hobbit.getRect()))
-			{
-				if ((*Iterator)->name == "SimpleStone")
-				{
-					Hobbit.stonesPoint += 1;
-					(*Iterator)->health = 0;
-				}
-			}
-		}
-		//_______________Logic for ElixirHP________________
-		for (Iterator = bigList.begin(); Iterator != bigList.end(); Iterator++)
-		{
-			if ((*Iterator)->getRect().intersects(Hobbit.getRect()))
-			{
-				if ((*Iterator)->name == "elixirHP")
-				{
-					if (Hobbit.elixir < 5)
-					{
-						Hobbit.elixir += 1;
-						(*Iterator)->health = 0;
-					}
-				}
-			}
-		}
+		window.clear();
 
+		menu.draw(window);
 
-
-		//===================================================MAIN DRAW==================================================
-		window.setView(viewCamera);
-		window.clear(Color(77, 83, 140));
-		lvl.Draw(window);
-		
-		//Draw all sprites
-		for (Iterator = bigList.begin(); Iterator != bigList.end(); Iterator++)
-		{
-			window.draw((*Iterator)->sprite);
-		}
-
-		window.draw(Hobbit.sprite);
-
-		if (!showMissionText)
-		{
-			HealthBarHobbit.update(Hobbit.health);
-			text.setPosition(viewCamera.getCenter().x - 8, viewCamera.getCenter().y - 210);
-			text2.setPosition(viewCamera.getCenter().x + 110, viewCamera.getCenter().y - 210);
-			InfoMission_sprite.setPosition(viewCamera.getCenter().x - 40, viewCamera.getCenter().y - 235);
-			window.draw(InfoMission_sprite);
-			HealthBarHobbit.draw(window);
-			window.draw(text);
-			window.draw(text2);
-
-
-			if (Hobbit.elixir == 0)
-			{
-				sprite_elixir0.setTextureRect(IntRect(0, 0, 88, 22));
-				sprite_elixir0.setPosition(viewCamera.getCenter().x + 45, viewCamera.getCenter().y - 145);
-				window.draw(sprite_elixir0);
-			}
-			if (Hobbit.elixir == 1)
-			{
-				sprite_elixir1.setTextureRect(IntRect(0, 0, 88, 22));
-				sprite_elixir1.setPosition(viewCamera.getCenter().x + 45, viewCamera.getCenter().y - 145);
-				window.draw(sprite_elixir1);
-			}
-			if (Hobbit.elixir == 2)
-			{
-				sprite_elixir2.setTextureRect(IntRect(0, 0, 88, 22));
-				sprite_elixir2.setPosition(viewCamera.getCenter().x + 45, viewCamera.getCenter().y - 145);
-				window.draw(sprite_elixir2);
-			}
-			if (Hobbit.elixir == 3)
-			{
-				sprite_elixir3.setTextureRect(IntRect(0, 0, 88, 22));
-				sprite_elixir3.setPosition(viewCamera.getCenter().x + 45, viewCamera.getCenter().y - 145);
-				window.draw(sprite_elixir3);
-			}
-			if (Hobbit.elixir == 4)
-			{
-				sprite_elixir4.setTextureRect(IntRect(0, 0, 88, 22));
-				sprite_elixir4.setPosition(viewCamera.getCenter().x + 45, viewCamera.getCenter().y - 145);
-				window.draw(sprite_elixir4);
-			}
-			if (Hobbit.elixir == 5)
-			{
-				sprite_elixir5.setTextureRect(IntRect(0, 0, 88, 22));
-				sprite_elixir5.setPosition(viewCamera.getCenter().x + 45, viewCamera.getCenter().y - 145);
-				window.draw(sprite_elixir5);
-			}
-		}
-
-		text0.setString("Press 'TAB' to see your menu");
-		text0.setPosition(viewCamera.getCenter().x + 50, viewCamera.getCenter().y + 220);
-
-		window.draw(text0);
-		window.draw(text3);
 		window.display();
 	}
+
 	return 0;
 }
