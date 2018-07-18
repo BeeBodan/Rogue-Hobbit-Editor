@@ -3,15 +3,28 @@
 #include<iostream>
 #include<sstream>
 #include<conio.h>
+#include <vector>
+#include <list>
+#include <Windows.h>
 #include "QuestMenu.h"
 #include "Camera.h"
 #include "level.h"
 #include "TinyXML/tinyxml.h"
-#include <vector>
-#include <list>
+
+#include "menu.h"
 
 using namespace sf;
 using namespace std;
+
+//=============================Get the horizontal and vertical screen sizes in pixel============================
+void GetDesktopResolution(int& horizontal, int& vertical)
+{
+	RECT desktop;
+	const HWND hDesktop = GetDesktopWindow();
+	GetWindowRect(hDesktop, &desktop);
+	horizontal = desktop.right;
+	vertical = desktop.bottom;
+}
 
 
 //===================================================MAIN CLASS==================================================
@@ -19,7 +32,7 @@ class MainClass
 {
 public:
 	vector<Object> obj;
-	float x, y, dx, dy, speed, TimerEnemy, TimerHobbit;
+	float x, y, dx, dy, speed, TimerEnemy, TimerHobbit, TimerShoot;
 	int w, h, health;
 	bool life;
 	Texture texture;
@@ -29,7 +42,7 @@ public:
 	MainClass(Image &image, float X, float Y, int W, int H, String Name)
 	{
 		x = X, y = Y; w = W; h = H; name = Name;
-		TimerEnemy = 0; TimerHobbit = 0; speed = 0; dx = 0; dy = 0;
+		TimerEnemy = 0; TimerHobbit = 0; TimerShoot = 0; speed = 0; dx = 0; dy = 0;
 		health = 100; life = true;
 		texture.loadFromImage(image);
 		sprite.setTexture(texture);
@@ -40,7 +53,7 @@ public:
 	{
 		return FloatRect(x, y, w, h);
 	}
-	virtual void update(float time) = 0;
+	virtual void update(float mainTime) = 0;
 };
 
 
@@ -71,19 +84,19 @@ public:
 			{
 				if (Keyboard::isKeyPressed(Keyboard::A))
 				{
-					state = left; speed = 0.1;
+					state = left; speed = 0.07;
 				}
 				if (Keyboard::isKeyPressed(Keyboard::D))
 				{
-					state = right; speed = 0.1;
+					state = right; speed = 0.07;
 				}
 				if (Keyboard::isKeyPressed(Keyboard::S))
 				{
-					state = up; speed = 0.1;
+					state = up; speed = 0.07;
 				}
 				if (Keyboard::isKeyPressed(Keyboard::W))
 				{
-					state = down; speed = 0.1;
+					state = down; speed = 0.07;
 				}
 			}
 		}
@@ -95,7 +108,7 @@ public:
 		{
 			if (getRect().intersects(obj[i].rect))
 			{
-				if (obj[i].name == "solid")
+				if (obj[i].name == "Solid")
 				{
 					if (Dy > 0) { y = obj[i].rect.top - h; }
 					if (Dy < 0) { y = obj[i].rect.top + obj[i].rect.height; }
@@ -106,7 +119,7 @@ public:
 		}
 	}
 
-	void update(float time)
+	void update(float mainTime)
 	{
 		move_hero();
 		switch (state)
@@ -117,15 +130,15 @@ public:
 		case down: dx = 0; dy = -speed; break;
 		case stay: break;
 		}
-		x += dx*time;
+		x += dx*mainTime;
 		LogicMap(dx, 0);
 
-		y += dy*time;
+		y += dy*mainTime;
 		LogicMap(0, dy);
 
 		speed = 0;
 
-		TimerHobbit += time;
+		TimerHobbit += mainTime;
 		if (TimerHobbit > 3000)
 		{
 			cooldown = true;
@@ -139,14 +152,14 @@ public:
 
 
 
-//===================================================CLASS ENEMIS==================================================
+//===================================================CLASS ENEMIES==================================================
 class Class_Enemy :public MainClass
 {
 public:
 	Class_Enemy(Image &image, Level &lvl, float X, float Y, int W, int H, String Name) :MainClass(image, X, Y, W, H, Name)
 	{
-		obj = lvl.GetObjects("solid");
-		if (name == "Enemy1" || name == "Enemy2")
+		obj = lvl.GetObjects("Solid");
+		if (name == "easyEnemy" || name == "easyEnemy2")
 		{
 			dx = -0.05;
 			dy = -0.05;
@@ -159,7 +172,7 @@ public:
 		{
 			if (getRect().intersects(obj[i].rect))
 			{
-				//if (obj[i].name == "solid"){//если встретили препятствие (объект с именем solid)
+				//if (obj[i].name == "Solid"){//если встретили препятствие (объект с именем solid)
 				{
 					if (Dy > 0) { y = obj[i].rect.top - h; dy = -0.05; sprite.scale(-1, 1); }
 					if (Dy < 0) { y = obj[i].rect.top + obj[i].rect.height; dy = 0.05; sprite.scale(-1, 1); }
@@ -170,13 +183,13 @@ public:
 		}
 	}
 
-	void update(float time)
+	void update(float mainTime)
 	{
-		if (name == "Enemy1")
+		if (name == "easyEnemy")
 		{
 			sprite.setTextureRect(IntRect(800, 96, w, h));
 
-			TimerEnemy += time;
+			TimerEnemy += mainTime;
 			if (TimerEnemy > 3000)
 			{
 				dx *= -1; TimerEnemy = 0;
@@ -184,16 +197,16 @@ public:
 			}
 
 			LogicMapEnemy(dx, 0);
-			x += dx*time;
+			x += dx*mainTime;
 
 			sprite.setPosition(x + w / 2, y + h / 2);
 			if (health <= 0) { life = false; }
 		}
-		if (name == "Enemy2")
+		if (name == "easyEnemy2")
 		{
 			sprite.setTextureRect(IntRect(768, 96, w, h));
 
-			TimerEnemy += time;
+			TimerEnemy += mainTime;
 			if (TimerEnemy > 4000)
 			{
 				dy *= -1; TimerEnemy = 0;
@@ -201,7 +214,7 @@ public:
 			}
 
 			LogicMapEnemy(0, dy);
-			y += dy*time;
+			y += dy*mainTime;
 
 			sprite.setPosition(x + w / 2, y + h / 2);
 			if (health <= 0) { life = false; }
@@ -218,9 +231,9 @@ public:
 
 	}
 
-	void update(float time)
+	void update(float mainTime)
 	{
-		if (name == "SimpleStone")
+		if (name == "simpleStone")
 		{
 			sprite.setTextureRect(IntRect(608, 767, w, h));
 			sprite.setPosition(x + w / 2, y + h / 2);
@@ -243,43 +256,45 @@ public:
 
 	Class_Shooting(Image &image, Level &lvl, float X, float Y, int W, int H, String Name, int dir) :MainClass(image, X, Y, W, H, Name)
 	{
-		obj = lvl.GetObjects("solid");
+		obj = lvl.GetObjects("Solid");
 		x = X;
 		y = Y;
 		w = 22, h = 14;
 		line = dir;
-		speed = 0.5;
+		speed = 0.18;
 		life = true;
 	}
 
-
-
-	void update(float time)
+	void update(float mainTime)
 	{
 		switch (line)
 		{
-		case 0: dx = -speed; dy = 0; break;
-		case 1: dx = speed; dy = 0; break;
-		case 2: dx = 0; dy = speed; break;
-		case 3: dx = 0; dy = -speed; break;
+		case 0: dx = -speed; dy = 0; TimerShoot += mainTime; if (TimerShoot > 200) { y++; } break;
+		case 1: dx = speed; dy = 0; TimerShoot += mainTime; if (TimerShoot > 200) { y++; } break;
+		case 2: dx = 0; dy = speed; TimerShoot += mainTime; break;
+		case 3: dx = 0; dy = -speed; TimerShoot += mainTime; break;
 		default:
 			break;
 		}
 
-		x += dx * time;
-		y += dy * time;
+		x += dx * mainTime;
+		y += dy * mainTime;
+
+		if (TimerShoot > 1000)
+		{
+			life = false;
+		}
 
 		for (int i = 0; i < obj.size(); i++)
 		{
 			if (getRect().intersects(obj[i].rect))
 			{
-				if (obj[i].name == "solid")
+				if (obj[i].name == "Solid")
 				{
 					life = false;
 				}
 			}
 		}
-
 		sprite.setTextureRect(IntRect(0, 0, w, h));
 		sprite.setPosition(x + w / 2, y + h / 2);
 	}
@@ -329,7 +344,11 @@ public:
 //==============================================================================================================
 int main()
 {
-	RenderWindow window(VideoMode(1280, 800), "HobbiRogueEdition");
+	int horizontal = 0;
+	int vertical = 0;
+	GetDesktopResolution(horizontal, vertical);
+	RenderWindow window(VideoMode(horizontal, vertical), "HobbitRogueEdition", Style::Fullscreen);
+	//RenderWindow window(VideoMode(1280, 800), "HobbiRogueEdition");
 	viewCamera.reset(FloatRect(0, 0, 640, 480));
 
 	//_________text for 'Press TAB'________
@@ -372,7 +391,7 @@ int main()
 
 	//_________Load Map________
 	Level lvl;
-	lvl.LoadFromFile("MapThree.tmx");
+	lvl.LoadFromFile("MapFour.tmx");
 
 	//_________image for 'elixir 1-5'__________
 	Image image_elixir0, image_elixir1, image_elixir2, image_elixir3, image_elixir4, image_elixir5;
@@ -400,11 +419,8 @@ int main()
 	Image heroImage;
 	heroImage.loadFromFile("images/CallMHero3.png");
 
-	Image easyEnemyImage;
-	easyEnemyImage.loadFromFile("images/object.png");
-
-	Image simpleStone;                             //TEMPORALLY, soon delete this!
-	simpleStone.loadFromFile("images/object.png");
+	Image objects;
+	objects.loadFromFile("images/object.png");
 
 	Image shooting;
 	shooting.loadFromFile("images/shoot.png");
@@ -415,31 +431,31 @@ int main()
 	list<MainClass*>::iterator Iterator;
 	list<MainClass*>::iterator Iterator2;
 
-	vector<Object> enemis, enemis2, stones, elixirHP;
+	vector<Object> enemies, enemies2, stones, elixirHP;
 
-	enemis = lvl.GetObjects("easyEnemy");
-	for (int i = 0; i < enemis.size(); i++)
+	enemies = lvl.GetObjects("EasyEnemy");
+	for (int i = 0; i < enemies.size(); i++)
 	{
-		bigList.push_back(new Class_Enemy(easyEnemyImage, lvl, enemis[i].rect.left, enemis[i].rect.top, 32, 32, "Enemy1"));
+		bigList.push_back(new Class_Enemy(objects, lvl, enemies[i].rect.left, enemies[i].rect.top, 32, 32, "easyEnemy"));
 	}
-	enemis2 = lvl.GetObjects("easyEnemy2");
-	for (int i = 0; i < enemis2.size(); i++)
+	enemies2 = lvl.GetObjects("EasyEnemy2");
+	for (int i = 0; i < enemies2.size(); i++)
 	{
-		bigList.push_back(new Class_Enemy(easyEnemyImage, lvl, enemis2[i].rect.left, enemis2[i].rect.top, 32, 32, "Enemy2"));
+		bigList.push_back(new Class_Enemy(objects, lvl, enemies2[i].rect.left, enemies2[i].rect.top, 32, 32, "easyEnemy2"));
 	}
-	stones = lvl.GetObjects("stone");
+	stones = lvl.GetObjects("Stone");
 	for (int i = 0; i < stones.size(); i++)
 	{
-		bigList.push_back(new Class_Things(simpleStone, lvl, stones[i].rect.left, stones[i].rect.top, 32, 32, "SimpleStone"));
+		bigList.push_back(new Class_Things(objects, lvl, stones[i].rect.left, stones[i].rect.top, 32, 32, "simpleStone"));
 	}
-	elixirHP = lvl.GetObjects("elixirHP");
+	elixirHP = lvl.GetObjects("ElixirHP");
 	for (int i = 0; i < elixirHP.size(); i++)
 	{
-		bigList.push_back(new Class_Things(simpleStone, lvl, elixirHP[i].rect.left, elixirHP[i].rect.top, 32, 32, "elixirHP"));
+		bigList.push_back(new Class_Things(objects, lvl, elixirHP[i].rect.left, elixirHP[i].rect.top, 32, 32, "elixirHP"));
 	}
 
-	Object player = lvl.GetObject("player");
-	Class_Hero Hobbit(heroImage, lvl, player.rect.left, player.rect.top, 32, 32, "Player1");
+	Object player = lvl.GetObject("Player");
+	Class_Hero Hobbit(heroImage, lvl, player.rect.left, player.rect.top, 32, 32, "player1");
 	
 
 	//_____Some variables_____
@@ -451,16 +467,18 @@ int main()
 	while (window.isOpen())
 	{
 
-		float time = clock.getElapsedTime().asMicroseconds();
+		float mainTime = clock.getElapsedTime().asMicroseconds();
 
 		clock.restart();
-		time = time / 800;
+		mainTime = mainTime / 800;
 
 		Event event;
 		while (window.pollEvent(event))
 		{
-			if (event.type == sf::Event::Closed)
-				window.close();
+			if (event.type == sf::Event::KeyPressed)
+				if ((event.key.code == Keyboard::Escape))
+					window.close();
+
 			//_____________TAB______________
 			if (event.type == Event::KeyPressed)
 				if ((event.key.code == Keyboard::Tab))
@@ -548,25 +566,25 @@ int main()
 
 			if (Keyboard::isKeyPressed(Keyboard::A))
 			{
-				frame += 0.005 * time;
+				frame += 0.005 * mainTime;
 				if (frame > 5) frame -= 5;
 				Hobbit.sprite.setTextureRect(IntRect(32 * int(frame), 33, 32, 32));
 			}
 			if (Keyboard::isKeyPressed(Keyboard::D))
 			{
-				frame += 0.005 * time;
+				frame += 0.005 * mainTime;
 				if (frame > 5) frame -= 5;
 				Hobbit.sprite.setTextureRect(IntRect(32 * int(frame), 0, 32, 32));
 			}
 			if (Keyboard::isKeyPressed(Keyboard::W))
 			{
-				frame += 0.005 * time;
+				frame += 0.005 * mainTime;
 				if (frame > 5) frame -= 5;
 				Hobbit.sprite.setTextureRect(IntRect(32 * int(frame), 66, 32, 32));
 			}
 			if (Keyboard::isKeyPressed(Keyboard::S))
 			{
-				frame += 0.005 * time;
+				frame += 0.005 * mainTime;
 				if (frame > 5) frame -= 5;
 				Hobbit.sprite.setTextureRect(IntRect(32 * int(frame), 0, 32, 32));
 			}
@@ -579,77 +597,77 @@ int main()
 		}
 
 		//================================================MAIN LOGIC FOR ALL (UPDATE)===============================================
-		Hobbit.update(time);
+		Hobbit.update(mainTime);
 
 		//________________Main Logic_________________
-		for (Iterator = bigList.begin(); Iterator != bigList.end();)
+		if (Hobbit.life == true)
 		{
-			MainClass *all = *Iterator; //(*Iterator)->
-			all->update(time);
-			if (all->life == false)
+			for (Iterator = bigList.begin(); Iterator != bigList.end();)
 			{
-			Iterator = bigList.erase(Iterator); delete all;
-			}
-			else Iterator++;
-		}
-		//________________Logic for Enemy_____________
-		for (Iterator = bigList.begin(); Iterator != bigList.end(); Iterator++)
-		{
-			if ((*Iterator)->getRect().intersects(Hobbit.getRect()))
-			{
-				if ((*Iterator)->name == "Enemy1")
+				MainClass *all = *Iterator; //(*Iterator)->
+				all->update(mainTime);
+				if (all->life == false)
 				{
-					(*Iterator)->dx = 0;
-					Hobbit.health -= 35;
-					(*Iterator)->health = 0;
+					Iterator = bigList.erase(Iterator); delete all;
 				}
-				if ((*Iterator)->name == "Enemy2")
-				{
-					(*Iterator)->dx = 0;
-					Hobbit.health -= 50;
-					(*Iterator)->health = 0;
-				}
+				else Iterator++;
 			}
-			for (Iterator2 = bigList.begin(); Iterator2 != bigList.end(); Iterator2++)
+			//________________Logic for Enemies_____________
+			for (Iterator = bigList.begin(); Iterator != bigList.end(); Iterator++)
 			{
-				if ((*Iterator)->getRect() != (*Iterator2)->getRect())
+				if ((*Iterator)->getRect().intersects(Hobbit.getRect()))
 				{
-					if (((*Iterator)->getRect().intersects((*Iterator2)->getRect())) && ((*Iterator)->name == "Enemy1" || "Enemy2") && ((*Iterator2)->name == "ShootStone"))
+					if ((*Iterator)->name == "easyEnemy")
 					{
+						(*Iterator)->dx = 0;
+						Hobbit.health -= 35;
 						(*Iterator)->health = 0;
-						(*Iterator2)->life = false;
+					}
+					if ((*Iterator)->name == "easyEnemy2")
+					{
+						(*Iterator)->dx = 0;
+						Hobbit.health -= 50;
+						(*Iterator)->health = 0;
+					}
+				}
+				for (Iterator2 = bigList.begin(); Iterator2 != bigList.end(); Iterator2++)
+				{
+					if ((*Iterator)->getRect() != (*Iterator2)->getRect())
+					{
+						if (((*Iterator)->getRect().intersects((*Iterator2)->getRect())) && ((*Iterator)->name == "easyEnemy") && ((*Iterator2)->name == "ShootStone"))
+						{
+							(*Iterator)->health = 0;
+							(*Iterator2)->life = false;
+						}
+						if (((*Iterator)->getRect().intersects((*Iterator2)->getRect())) && ((*Iterator)->name == "easyEnemy2") && ((*Iterator2)->name == "ShootStone"))
+						{
+							(*Iterator)->health = 0;
+							(*Iterator2)->life = false;
+						}
+					}
+				}
+			}
+			//_______________Logic for Objects________________
+			for (Iterator = bigList.begin(); Iterator != bigList.end(); Iterator++)
+			{
+				if ((*Iterator)->getRect().intersects(Hobbit.getRect()))
+				{
+					if ((*Iterator)->name == "simpleStone")
+					{
+						Hobbit.stonesPoint += 1;
+						(*Iterator)->health = 0;
+					}
+					if ((*Iterator)->name == "elixirHP")
+					{
+						if (Hobbit.elixir < 5)
+						{
+							Hobbit.elixir += 1;
+							(*Iterator)->health = 0;
+						}
 					}
 				}
 			}
 		}
-		//_______________Logic for Stone________________
-		for (Iterator = bigList.begin(); Iterator != bigList.end(); Iterator++)
-		{
-			if ((*Iterator)->getRect().intersects(Hobbit.getRect()))
-			{
-				if ((*Iterator)->name == "SimpleStone")
-				{
-					Hobbit.stonesPoint += 1;
-					(*Iterator)->health = 0;
-				}
-			}
-		}
-		//_______________Logic for ElixirHP________________
-		for (Iterator = bigList.begin(); Iterator != bigList.end(); Iterator++)
-		{
-			if ((*Iterator)->getRect().intersects(Hobbit.getRect()))
-			{
-				if ((*Iterator)->name == "elixirHP")
-				{
-					if (Hobbit.elixir < 5)
-					{
-						Hobbit.elixir += 1;
-						(*Iterator)->health = 0;
-					}
-				}
-			}
-		}
-
 
 
 		//===================================================MAIN DRAW==================================================
@@ -657,12 +675,11 @@ int main()
 		window.clear(Color(77, 83, 140));
 		lvl.Draw(window);
 		
-		//Draw all sprites
+		//__________Draw all sprites____________
 		for (Iterator = bigList.begin(); Iterator != bigList.end(); Iterator++)
 		{
 			window.draw((*Iterator)->sprite);
 		}
-
 		window.draw(Hobbit.sprite);
 
 		if (!showMissionText)
