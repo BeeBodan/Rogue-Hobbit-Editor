@@ -32,7 +32,7 @@ class MainClass
 {
 public:
 	vector<Object> obj;
-	float x, y, dx, dy, speed, TimerEnemy, TimerHobbit, TimerShoot;
+	float x, y, dx, dy, speed, TimerEnemy, TimerHobbit, TimerShoot, TMPx;
 	int w, h, health;
 	bool life;
 	Texture texture;
@@ -42,7 +42,7 @@ public:
 	MainClass(Image &image, float X, float Y, int W, int H, String Name)
 	{
 		x = X, y = Y; w = W; h = H; name = Name;
-		TimerEnemy = 0; TimerHobbit = 0; TimerShoot = 0; speed = 0; dx = 0; dy = 0;
+		TimerEnemy = 0; TimerHobbit = 0; TimerShoot = 0; speed = 0; dx = 0; dy = 0, TMPx = 0;
 		health = 100; life = true;
 		texture.loadFromImage(image);
 		sprite.setTexture(texture);
@@ -63,12 +63,12 @@ class Class_Hero :public MainClass
 {
 public:
 	enum { left, right, up, down, stay } state;
-	int stonesPoint, elixir;
+	int stonesPoint, elixir, enemyPoint;
 	bool  cooldown = false;
 
 	Class_Hero(Image &image, Level &lvl, float X, float Y, int W, int H, String Name) :MainClass(image, X, Y, W, H, Name)     //lvl!!!!!
 	{
-		stonesPoint = 0; state = stay; elixir = 0;
+		stonesPoint = 0; state = stay; elixir = 0, enemyPoint = 0;
 		obj = lvl.GetAllObjects();
 		sprite.setTextureRect(IntRect(0, 0, w, h));
 		sprite.setPosition(x + w / 2, y + h / 2);
@@ -146,7 +146,7 @@ public:
 
 		sprite.setPosition(x + w / 2, y + h / 2);
 		if (health <= 0) { life = false; }
-		if (life) { getPlayerCoordXY(x, y); }
+		if (life) { getPlayerCoordXY(x + 80, y + 50); }    //80 and 50 for interface (center)
 	}
 };
 
@@ -269,10 +269,10 @@ public:
 	{
 		switch (line)
 		{
-		case 0: dx = -speed; dy = 0; TimerShoot += mainTime; if (TimerShoot > 200) { y++; } break;
-		case 1: dx = speed; dy = 0; TimerShoot += mainTime; if (TimerShoot > 200) { y++; } break;
-		case 2: dx = 0; dy = speed; TimerShoot += mainTime; break;
-		case 3: dx = 0; dy = -speed; TimerShoot += mainTime; break;
+		case 0: dx = -speed; dy = 0; TimerShoot += mainTime; sprite.setRotation(sprite.getRotation() + 10); if (TimerShoot > 500) { y++; } break;
+		case 1: dx = speed; dy = 0; TimerShoot += mainTime; sprite.setRotation(sprite.getRotation() + 10); if (TimerShoot > 500) { y++; } break;
+		case 2: dx = 0; dy = speed; TimerShoot += mainTime; sprite.setRotation(sprite.getRotation() + 10); break;
+		case 3: dx = 0; dy = -speed; TimerShoot += mainTime; sprite.setRotation(sprite.getRotation() + 10); break;
 		default:
 			break;
 		}
@@ -292,9 +292,11 @@ public:
 				if (obj[i].name == "Solid")
 				{
 					life = false;
+					TMPx = x;
 				}
 			}
 		}
+		
 		sprite.setTextureRect(IntRect(0, 0, w, h));
 		sprite.setPosition(x + w / 2, y + h / 2);
 	}
@@ -317,7 +319,7 @@ public:
 		image_bar.createMaskFromColor(Color(50, 96, 166));
 		texture_bar.loadFromImage(image_bar);
 		sprite_bar.setTexture(texture_bar);
-		sprite_bar.setTextureRect(IntRect(24, 30, 74, 11));
+		sprite_bar.setTextureRect(IntRect(22, 30, 66, 11));
 
 		max = 100;
 		bar.setFillColor(Color(0, 0, 0));
@@ -327,12 +329,12 @@ public:
 	{
 		if (health > 0)
 			//if (health < max)
-			bar.setSize(Vector2f((max - health) * 68 / max, 5));
+			bar.setSize(Vector2f((max - health) * 60 / max, 5));
 	}
 	void draw(RenderWindow &window)
 	{
-		sprite_bar.setPosition(viewCamera.getCenter().x + 58, viewCamera.getCenter().y - 159);
-		bar.setPosition(viewCamera.getCenter().x + 61, viewCamera.getCenter().y - 156);
+		sprite_bar.setPosition(viewCamera.getCenter().x + 245, viewCamera.getCenter().y - 160);
+		bar.setPosition(viewCamera.getCenter().x + 248, viewCamera.getCenter().y - 157);
 
 		window.draw(sprite_bar);
 		window.draw(bar);
@@ -351,25 +353,18 @@ int main()
 	//RenderWindow window(VideoMode(1280, 800), "HobbiRogueEdition");
 	viewCamera.reset(FloatRect(0, 0, 640, 480));
 
-	//_________text for 'Press TAB'________
-	Font font0;
-	font0.loadFromFile("HobbitFont2.ttf");
-	Text text0("", font0, 12);
-	//text0.setStyle(Text::Bold);
-	text0.setColor(Color::Red);
-
 	//________text for 'Health and stones'_______
-	Font font;
-	font.loadFromFile("HobbitFont2.ttf");
-	Text text("", font, 12);
+	Font font1;
+	font1.loadFromFile("HobbitFont2.ttf");
+	Text text1("", font1, 12);
 	//text.setStyle(Text::Bold);
-	text.setColor(Color::Black);
+	text1.setColor(Color::Black);
 
 	//________text for 'Quest'__________
 	Font font2;
-	font2.loadFromFile("HobbitFont2.ttf");
-	Text text2("", font2, 11);
-	//text2.setStyle(Text::Bold);
+	font2.loadFromFile("HobbitFont3.ttf");
+	Text text2("", font2, 16);
+	text2.setStyle(Text::Bold);
 	text2.setColor(Color::Black);
 
 	//________text for 'Dead'________
@@ -379,15 +374,23 @@ int main()
 	//text3.setStyle(Text::Bold);
 	text3.setColor(Color::Red);
 
-	//________Image for 'TAB'_________
-	Image InfoMission_image;
-	InfoMission_image.loadFromFile("images/info3.png");
-	Texture InfoMission_texture;
-	InfoMission_texture.loadFromImage(InfoMission_image);
-	Sprite InfoMission_sprite;
-	InfoMission_sprite.setTexture(InfoMission_texture);
-	InfoMission_sprite.setTextureRect(IntRect(1, 1, 800, 504));
-	InfoMission_sprite.setScale(0.45f, 0.45f);
+	//_________text for 'Interface'__________
+	Image image_speak;
+	image_speak.loadFromFile("images/ProtoTwoShort.png");
+	Texture texture_speak;
+	texture_speak.loadFromImage(image_speak);
+	Sprite sprite_speak;
+	sprite_speak.setTexture(texture_speak);
+	sprite_speak.setTextureRect(IntRect(0, 0, 640, 64));
+
+	//_________text for 'Interface'__________
+	Image image_blok;
+	image_blok.loadFromFile("images/ProtoBlok.png");
+	Texture texture_blok;
+	texture_blok.loadFromImage(image_blok);
+	Sprite sprite_blok;
+	sprite_blok.setTexture(texture_blok);
+	sprite_blok.setTextureRect(IntRect(0, 0, 225, 480));
 
 	//_________Load Map________
 	Level lvl;
@@ -416,14 +419,15 @@ int main()
 	sprite_elixir4.setTexture(texture_elixir4);
 	sprite_elixir5.setTexture(texture_elixir5);
 
-	Image heroImage;
+	Image heroImage, shooting, objects;
 	heroImage.loadFromFile("images/CallMHero3.png");
-
-	Image objects;
 	objects.loadFromFile("images/object.png");
-
-	Image shooting;
 	shooting.loadFromFile("images/shoot.png");
+
+	Texture shooting_texture;
+	shooting_texture.loadFromImage(shooting);
+	Sprite shooting_sprite;
+	shooting_sprite.setTexture(shooting_texture);
 
 
 	//=================================================CLASS DECLARATION================================================
@@ -456,7 +460,6 @@ int main()
 
 	Object player = lvl.GetObject("Player");
 	Class_Hero Hobbit(heroImage, lvl, player.rect.left, player.rect.top, 32, 32, "player1");
-	
 
 	//_____Some variables_____
 	bool showMissionText = true;
@@ -478,35 +481,6 @@ int main()
 			if (event.type == sf::Event::KeyPressed)
 				if ((event.key.code == Keyboard::Escape))
 					window.close();
-
-			//_____________TAB______________
-			if (event.type == Event::KeyPressed)
-				if ((event.key.code == Keyboard::Tab))
-				{
-					switch (showMissionText)
-					{
-					case true:
-					{
-						ostringstream PlayerHealth;
-						PlayerHealth << Hobbit.health;
-						ostringstream scoreString;
-						scoreString << Hobbit.stonesPoint;
-						ostringstream Mission;
-						Mission << GetMissionText(GetMission(Hobbit.x));
-						text.setString("Hobbit:" "\n" "      ''Name''" "\n" "Health: " "\n"
-							"Elixir: "  "\n"  "Stones: " + scoreString.str() + "\n");
-						text2.setString(Mission.str());
-						showMissionText = false;
-						break;
-					}
-					case false:
-					{
-						//text2.setString("");
-						showMissionText = true;
-						break;
-					}
-					}
-				}
 
 			//_____________T(elixir)____________
 			if (Hobbit.life == true)
@@ -561,7 +535,7 @@ int main()
 		{
 			if (Hobbit.state == Hobbit.left) { Hobbit.sprite.setTextureRect(IntRect(0, 33, 32, 32)); }
 			if (Hobbit.state == Hobbit.right) { Hobbit.sprite.setTextureRect(IntRect(0, 0, 32, 32)); }
-			if (Hobbit.state == Hobbit.up) { Hobbit.sprite.setTextureRect(IntRect(0, 0, 32, 32)); }
+			if (Hobbit.state == Hobbit.up) { Hobbit.sprite.setTextureRect(IntRect(0, 99, 32, 32)); }
 			if (Hobbit.state == Hobbit.down) { Hobbit.sprite.setTextureRect(IntRect(0, 66, 32, 32)); }
 
 			if (Keyboard::isKeyPressed(Keyboard::A))
@@ -586,7 +560,7 @@ int main()
 			{
 				frame += 0.005 * mainTime;
 				if (frame > 5) frame -= 5;
-				Hobbit.sprite.setTextureRect(IntRect(32 * int(frame), 0, 32, 32));
+				Hobbit.sprite.setTextureRect(IntRect(32 * int(frame), 99, 32, 32));
 			}
 		}
 		else
@@ -638,11 +612,13 @@ int main()
 						{
 							(*Iterator)->health = 0;
 							(*Iterator2)->life = false;
+							Hobbit.enemyPoint += 1;
 						}
 						if (((*Iterator)->getRect().intersects((*Iterator2)->getRect())) && ((*Iterator)->name == "easyEnemy2") && ((*Iterator2)->name == "ShootStone"))
 						{
 							(*Iterator)->health = 0;
 							(*Iterator2)->life = false;
+							Hobbit.enemyPoint += 1;
 						}
 					}
 				}
@@ -675,6 +651,7 @@ int main()
 		window.clear(Color(77, 83, 140));
 		lvl.Draw(window);
 		
+		
 		//__________Draw all sprites____________
 		for (Iterator = bigList.begin(); Iterator != bigList.end(); Iterator++)
 		{
@@ -682,60 +659,64 @@ int main()
 		}
 		window.draw(Hobbit.sprite);
 
-		if (!showMissionText)
+		ostringstream PlayerHealth, scoreString, Mission;
+		PlayerHealth << Hobbit.health;
+		scoreString << Hobbit.stonesPoint;
+		Mission << GetMissionText(GetMission(Hobbit.x, Hobbit.stonesPoint, Hobbit.enemyPoint, Hobbit.health));
+		text1.setString("      ''Name''" "\n\n" "Health: " "\n"
+			"Elixir: "  "\n"  "Stones: " + scoreString.str() + "\n");
+		text2.setString(Mission.str());
+
+		sprite_speak.setPosition(viewCamera.getCenter().x - 320, viewCamera.getCenter().y + 176);
+		window.draw(sprite_speak);
+		sprite_blok.setPosition(viewCamera.getCenter().x + 95, viewCamera.getCenter().y - 240);
+		window.draw(sprite_blok);
+
+		HealthBarHobbit.update(Hobbit.health);
+		text1.setPosition(viewCamera.getCenter().x + 178, viewCamera.getCenter().y - 210);
+		text2.setPosition(viewCamera.getCenter().x + 138, viewCamera.getCenter().y - 85);
+		HealthBarHobbit.draw(window);
+		window.draw(text1);
+		window.draw(text2);
+
+
+		if (Hobbit.elixir == 0)
 		{
-			HealthBarHobbit.update(Hobbit.health);
-			text.setPosition(viewCamera.getCenter().x - 8, viewCamera.getCenter().y - 210);
-			text2.setPosition(viewCamera.getCenter().x + 110, viewCamera.getCenter().y - 210);
-			InfoMission_sprite.setPosition(viewCamera.getCenter().x - 40, viewCamera.getCenter().y - 235);
-			window.draw(InfoMission_sprite);
-			HealthBarHobbit.draw(window);
-			window.draw(text);
-			window.draw(text2);
-
-
-			if (Hobbit.elixir == 0)
-			{
-				sprite_elixir0.setTextureRect(IntRect(0, 0, 88, 22));
-				sprite_elixir0.setPosition(viewCamera.getCenter().x + 45, viewCamera.getCenter().y - 145);
-				window.draw(sprite_elixir0);
-			}
-			if (Hobbit.elixir == 1)
-			{
-				sprite_elixir1.setTextureRect(IntRect(0, 0, 88, 22));
-				sprite_elixir1.setPosition(viewCamera.getCenter().x + 45, viewCamera.getCenter().y - 145);
-				window.draw(sprite_elixir1);
-			}
-			if (Hobbit.elixir == 2)
-			{
-				sprite_elixir2.setTextureRect(IntRect(0, 0, 88, 22));
-				sprite_elixir2.setPosition(viewCamera.getCenter().x + 45, viewCamera.getCenter().y - 145);
-				window.draw(sprite_elixir2);
-			}
-			if (Hobbit.elixir == 3)
-			{
-				sprite_elixir3.setTextureRect(IntRect(0, 0, 88, 22));
-				sprite_elixir3.setPosition(viewCamera.getCenter().x + 45, viewCamera.getCenter().y - 145);
-				window.draw(sprite_elixir3);
-			}
-			if (Hobbit.elixir == 4)
-			{
-				sprite_elixir4.setTextureRect(IntRect(0, 0, 88, 22));
-				sprite_elixir4.setPosition(viewCamera.getCenter().x + 45, viewCamera.getCenter().y - 145);
-				window.draw(sprite_elixir4);
-			}
-			if (Hobbit.elixir == 5)
-			{
-				sprite_elixir5.setTextureRect(IntRect(0, 0, 88, 22));
-				sprite_elixir5.setPosition(viewCamera.getCenter().x + 45, viewCamera.getCenter().y - 145);
-				window.draw(sprite_elixir5);
-			}
+			sprite_elixir0.setTextureRect(IntRect(0, 0, 88, 22));
+			sprite_elixir0.setPosition(viewCamera.getCenter().x + 230, viewCamera.getCenter().y - 145);
+			window.draw(sprite_elixir0);
+		}
+		if (Hobbit.elixir == 1)
+		{
+			sprite_elixir1.setTextureRect(IntRect(0, 0, 88, 22));
+			sprite_elixir1.setPosition(viewCamera.getCenter().x + 230, viewCamera.getCenter().y - 145);
+			window.draw(sprite_elixir1);
+		}
+		if (Hobbit.elixir == 2)
+		{
+			sprite_elixir2.setTextureRect(IntRect(0, 0, 88, 22));
+			sprite_elixir2.setPosition(viewCamera.getCenter().x + 230, viewCamera.getCenter().y - 145);
+			window.draw(sprite_elixir2);
+		}
+		if (Hobbit.elixir == 3)
+		{
+			sprite_elixir3.setTextureRect(IntRect(0, 0, 88, 22));
+			sprite_elixir3.setPosition(viewCamera.getCenter().x + 230, viewCamera.getCenter().y - 145);
+			window.draw(sprite_elixir3);
+		}
+		if (Hobbit.elixir == 4)
+		{
+			sprite_elixir4.setTextureRect(IntRect(0, 0, 88, 22));
+			sprite_elixir4.setPosition(viewCamera.getCenter().x + 230, viewCamera.getCenter().y - 145);
+			window.draw(sprite_elixir4);
+		}
+		if (Hobbit.elixir == 5)
+		{
+			sprite_elixir5.setTextureRect(IntRect(0, 0, 88, 22));
+			sprite_elixir5.setPosition(viewCamera.getCenter().x + 230, viewCamera.getCenter().y - 145);
+			window.draw(sprite_elixir5);
 		}
 
-		text0.setString("Press 'TAB' to see your menu");
-		text0.setPosition(viewCamera.getCenter().x + 50, viewCamera.getCenter().y + 220);
-
-		window.draw(text0);
 		window.draw(text3);
 		window.display();
 	}
