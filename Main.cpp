@@ -32,7 +32,8 @@ class MainClass
 {
 public:
 	vector<Object> obj;
-	float x, y, dx, dy, speed, TimerEnemy, TimerHobbit, TimerShoot, TMPx;
+	float x, y, dx, dy, speed, TimerEnemy, TimerHobbit, TimerShoot, TimerDamage, TimerDamageGetOut;
+	float frame;
 	int w, h, health;
 	bool life;
 	Texture texture;
@@ -42,7 +43,8 @@ public:
 	MainClass(Image &image, float X, float Y, int W, int H, String Name)
 	{
 		x = X, y = Y; w = W; h = H; name = Name;
-		TimerEnemy = 0; TimerHobbit = 0; TimerShoot = 0; speed = 0; dx = 0; dy = 0, TMPx = 0;
+		TimerEnemy = 0; TimerHobbit = 0; TimerShoot = 0; TimerDamage = 0; TimerDamageGetOut = 0; speed = 0; dx = 0; dy = 0;
+		frame = 0;
 		health = 100; life = true;
 		texture.loadFromImage(image);
 		sprite.setTexture(texture);
@@ -63,8 +65,8 @@ class Class_Hero :public MainClass
 {
 public:
 	enum { left, right, up, down, stay } state;
-	int stonesPoint, elixir, enemyPoint;
-	bool  cooldown = false;
+	int stonesPoint, elixir, enemyPoint, GetOutFrom;
+	bool  cooldown = false, hitDamage = true, hitDamageGetOut1 = true, hitDamageGetOut2 = true, hitDamageGetOut3 = true, hitDamageGetOut4 = true, Press = false;
 
 	Class_Hero(Image &image, Level &lvl, float X, float Y, int W, int H, String Name) :MainClass(image, X, Y, W, H, Name)     //lvl!!!!!
 	{
@@ -80,23 +82,27 @@ public:
 	{
 		if (life == true)
 		{
-			if (Keyboard::isKeyPressed)
+			if (hitDamage == true)
 			{
-				if (Keyboard::isKeyPressed(Keyboard::A))
+				Press = false;
+				if (Keyboard::isKeyPressed)
 				{
-					state = left; speed = 0.07;
-				}
-				if (Keyboard::isKeyPressed(Keyboard::D))
-				{
-					state = right; speed = 0.07;
-				}
-				if (Keyboard::isKeyPressed(Keyboard::S))
-				{
-					state = up; speed = 0.07;
-				}
-				if (Keyboard::isKeyPressed(Keyboard::W))
-				{
-					state = down; speed = 0.07;
+					if (Keyboard::isKeyPressed(Keyboard::A))
+					{
+						state = left; speed = 0.07; Press = true;
+					}
+					if (Keyboard::isKeyPressed(Keyboard::D))
+					{
+						state = right; speed = 0.07; Press = true;
+					}
+					if (Keyboard::isKeyPressed(Keyboard::S))
+					{
+						state = up; speed = 0.07; Press = true;
+					}
+					if (Keyboard::isKeyPressed(Keyboard::W))
+					{
+						state = down; speed = 0.07; Press = true;
+					}
 				}
 			}
 		}
@@ -119,17 +125,144 @@ public:
 		}
 	}
 
+	void Animation(float mainTime)
+	{
+		if (life == true)
+		{
+			if (hitDamage == true)
+			{
+				if (state == left) { sprite.setTextureRect(IntRect(0, 33, 32, 32)); }
+				if (state == right) { sprite.setTextureRect(IntRect(0, 0, 32, 32)); }
+				if (state == up) { sprite.setTextureRect(IntRect(0, 99, 32, 32)); }
+				if (state == down) { sprite.setTextureRect(IntRect(0, 66, 32, 32)); }
+
+				if (Keyboard::isKeyPressed(Keyboard::A))
+				{
+					frame += 0.005 * mainTime;
+					if (frame > 5) frame -= 5;
+					sprite.setTextureRect(IntRect(32 * int(frame), 33, 32, 32));
+				}
+				if (Keyboard::isKeyPressed(Keyboard::D))
+				{
+					frame += 0.005 * mainTime;
+					if (frame > 5) frame -= 5;
+					sprite.setTextureRect(IntRect(32 * int(frame), 0, 32, 32));
+				}
+				if (Keyboard::isKeyPressed(Keyboard::W))
+				{
+					frame += 0.005 * mainTime;
+					if (frame > 5) frame -= 5;
+					sprite.setTextureRect(IntRect(32 * int(frame), 66, 32, 32));
+				}
+				if (Keyboard::isKeyPressed(Keyboard::S))
+				{
+					frame += 0.005 * mainTime;
+					if (frame > 5) frame -= 5;
+					sprite.setTextureRect(IntRect(32 * int(frame), 99, 32, 32));
+				}
+			}
+		}
+	}
+
 	void update(float mainTime)
 	{
+		Animation(mainTime);
 		move_hero();
+
 		switch (state)
 		{
-		case right:dx = speed; dy = 0; break;
-		case left:dx = -speed; dy = 0; break;
-		case up: dx = 0; dy = speed; break;
-		case down: dx = 0; dy = -speed; break;
-		case stay: break;
+		case right:dx = speed; dy = 0;
+			if (hitDamageGetOut1 == false)
+			{
+				if (Press == false) { dx = 0.09; }
+				dx = 0.09;
+			}
+			if (hitDamageGetOut2 == false)
+			{
+				if (Press == false) { dx = -0.09; }
+				dx = -0.09;
+			}
+			if (hitDamageGetOut3 == false)
+			{
+				if (Press == false) { dy = 0.09; }
+				dx = -0.09;
+			}
+			if (hitDamageGetOut4 == false)
+			{
+				if (Press == false) { dy = -0.09; }
+				dx = -0.09;
+			}
+			break;
+		case left:dx = -speed; dy = 0;
+			if (hitDamageGetOut1 == false)
+			{
+				if (Press == false) { dx = 0.09; }
+				dx = 0.09; 
+			}
+			if (hitDamageGetOut2 == false)
+			{
+				if (Press == false) { dx = -0.09; }
+				dx = -0.09;
+			}
+			if (hitDamageGetOut3 == false)
+			{
+				if (Press == false) { dy = 0.09; }
+				dx = 0.09;
+			}
+			if (hitDamageGetOut4 == false)
+			{
+				if (Press == false) { dy = -0.09; }
+				dx = 0.09;
+			}
+			break;
+		case up: dx = 0; dy = speed; //this down:)
+			if (hitDamageGetOut1 == false)
+			{
+				if (Press == false) { dx = 0.09; }
+				dy = -0.09; 
+			}
+			if (hitDamageGetOut2 == false)
+			{
+				if (Press == false) { dx = -0.09; }
+				dy = -0.09;
+			}
+			if (hitDamageGetOut3 == false)
+			{
+				if (Press == false) { dy = 0.09; }
+				dy = 0.09;
+			}
+			if (hitDamageGetOut4 == false)
+			{
+				if (Press == false) { dy = -0.09; }
+				dy = -0.09;
+			}
+			break;
+		case down: dx = 0; dy = -speed; //this up:)
+			if (hitDamageGetOut1 == false)
+			{
+				if (Press == false) { dx = 0.09; }
+				dy = 0.09; 
+			} 
+			if (hitDamageGetOut2 == false)
+			{
+				if (Press == false) { dx = -0.09; }
+				dy = 0.09;
+			}
+			if (hitDamageGetOut3 == false)
+			{
+				if (Press == false) { dy = 0.09; }
+				dy = 0.09;
+			}
+			if (hitDamageGetOut4 == false)
+			{
+				if (Press == false) { dy = -0.09; }
+				dy = -0.09;
+			}
+			break;
+		case stay:
+			break;
 		}
+
 		x += dx*mainTime;
 		LogicMap(dx, 0);
 
@@ -137,6 +270,21 @@ public:
 		LogicMap(0, dy);
 
 		speed = 0;
+
+		TimerDamageGetOut += mainTime;
+		if (TimerDamageGetOut > 500)
+		{
+			hitDamageGetOut1 = true;
+			hitDamageGetOut2 = true;
+			hitDamageGetOut3 = true;
+			hitDamageGetOut4 = true;
+		}
+
+		TimerDamage += mainTime;
+		if (TimerDamage > 2000)
+		{
+			hitDamage = true;
+		}
 
 		TimerHobbit += mainTime;
 		if (TimerHobbit > 3000)
@@ -172,7 +320,7 @@ public:
 		{
 			if (getRect().intersects(obj[i].rect))
 			{
-				//if (obj[i].name == "Solid"){//если встретили препятствие (объект с именем solid)
+				if (obj[i].name == "Solid")
 				{
 					if (Dy > 0) { y = obj[i].rect.top - h; dy = -0.05; sprite.scale(-1, 1); }
 					if (Dy < 0) { y = obj[i].rect.top + obj[i].rect.height; dy = 0.05; sprite.scale(-1, 1); }
@@ -183,41 +331,81 @@ public:
 		}
 	}
 
+	void Animation(float mainTime)
+	{
+		if (health > 0)
+		{
+			if (name == "easyEnemy")
+			{
+				frame += 0.005 * mainTime;
+				if (frame > 6) frame -= 6;
+				sprite.setTextureRect(IntRect(80 * int(frame), 0, w, h));
+
+				TimerEnemy += mainTime;
+				if (TimerEnemy > 3000)
+				{
+					dx *= -1; TimerEnemy = 0;
+					sprite.scale(-1, 1);
+				}
+
+				sprite.setPosition(x + w / 2, y + h / 2);
+			}
+		}
+		else
+		{
+			sprite.setTextureRect(IntRect(412, 420, 50, 23));   //Dead enemy
+		}
+
+		if (health > 0)
+		{
+			if (name == "easyEnemy2")
+			{
+				if (dy > 0)
+				{
+					frame += 0.005 * mainTime;
+					if (frame > 4) frame -= 4;
+					sprite.setTextureRect(IntRect(80 * int(frame), 227, w, h));
+				}
+				else
+				{
+					frame += 0.005 * mainTime;
+					if (frame > 4) frame -= 4;
+					sprite.setTextureRect(IntRect(80 * int(frame), 346, w, h));
+				}
+
+				TimerEnemy += mainTime;
+				if (TimerEnemy > 4000)
+				{
+					dy *= -1; TimerEnemy = 0;
+				}
+				sprite.setPosition(x + w / 2, y + h / 2);
+			}
+		}
+		else
+		{
+			sprite.setTextureRect(IntRect(412, 420, 50, 23));   //Dead enemy
+		}
+	}
+
 	void update(float mainTime)
 	{
-		if (name == "easyEnemy")
+		Animation(mainTime);
+
+		if (health > 0)
 		{
-			sprite.setTextureRect(IntRect(800, 96, w, h));
-
-			TimerEnemy += mainTime;
-			if (TimerEnemy > 3000)
+			if (name == "easyEnemy")
 			{
-				dx *= -1; TimerEnemy = 0;
-				sprite.scale(-1, 1);
+				LogicMapEnemy(dx, 0);
+				x += dx*mainTime;
 			}
-
-			LogicMapEnemy(dx, 0);
-			x += dx*mainTime;
-
-			sprite.setPosition(x + w / 2, y + h / 2);
-			if (health <= 0) { life = false; }
 		}
-		if (name == "easyEnemy2")
+		if (health > 0)
 		{
-			sprite.setTextureRect(IntRect(768, 96, w, h));
-
-			TimerEnemy += mainTime;
-			if (TimerEnemy > 4000)
+			if (name == "easyEnemy2")
 			{
-				dy *= -1; TimerEnemy = 0;
-				sprite.scale(-1, 1);
+				LogicMapEnemy(0, dy);
+				y += dy*mainTime;
 			}
-
-			LogicMapEnemy(0, dy);
-			y += dy*mainTime;
-
-			sprite.setPosition(x + w / 2, y + h / 2);
-			if (health <= 0) { life = false; }
 		}
 	}
 };
@@ -292,7 +480,6 @@ public:
 				if (obj[i].name == "Solid")
 				{
 					life = false;
-					TMPx = x;
 				}
 			}
 		}
@@ -348,9 +535,9 @@ int main()
 {
 	int horizontal = 0;
 	int vertical = 0;
-	GetDesktopResolution(horizontal, vertical);
-	RenderWindow window(VideoMode(horizontal, vertical), "HobbitRogueEdition", Style::Fullscreen);
-	//RenderWindow window(VideoMode(1280, 800), "HobbiRogueEdition");
+	//GetDesktopResolution(horizontal, vertical);
+	//RenderWindow window(VideoMode(horizontal, vertical), "HobbitRogueEdition", Style::Fullscreen);
+	RenderWindow window(VideoMode(1280, 800), "HobbiRogueEdition");
 	viewCamera.reset(FloatRect(0, 0, 640, 480));
 
 	//________text for 'Health and stones'_______
@@ -395,6 +582,7 @@ int main()
 	//_________Load Map________
 	Level lvl;
 	lvl.LoadFromFile("MapFour.tmx");
+	
 
 	//_________image for 'elixir 1-5'__________
 	Image image_elixir0, image_elixir1, image_elixir2, image_elixir3, image_elixir4, image_elixir5;
@@ -419,33 +607,29 @@ int main()
 	sprite_elixir4.setTexture(texture_elixir4);
 	sprite_elixir5.setTexture(texture_elixir5);
 
-	Image heroImage, shooting, objects;
+	Image heroImage, shooting, objects, enemy;
 	heroImage.loadFromFile("images/CallMHero3.png");
 	objects.loadFromFile("images/object.png");
 	shooting.loadFromFile("images/shoot.png");
-
-	Texture shooting_texture;
-	shooting_texture.loadFromImage(shooting);
-	Sprite shooting_sprite;
-	shooting_sprite.setTexture(shooting_texture);
-
+	enemy.loadFromFile("images/dino.png");
 
 	//=================================================CLASS DECLARATION================================================
 	list<MainClass*> bigList;
 	list<MainClass*>::iterator Iterator;
 	list<MainClass*>::iterator Iterator2;
+	list<MainClass*>::iterator Iterator3;
 
 	vector<Object> enemies, enemies2, stones, elixirHP;
 
 	enemies = lvl.GetObjects("EasyEnemy");
 	for (int i = 0; i < enemies.size(); i++)
 	{
-		bigList.push_back(new Class_Enemy(objects, lvl, enemies[i].rect.left, enemies[i].rect.top, 32, 32, "easyEnemy"));
+		bigList.push_back(new Class_Enemy(enemy, lvl, enemies[i].rect.left, enemies[i].rect.top, 80, 50, "easyEnemy"));
 	}
 	enemies2 = lvl.GetObjects("EasyEnemy2");
 	for (int i = 0; i < enemies2.size(); i++)
 	{
-		bigList.push_back(new Class_Enemy(objects, lvl, enemies2[i].rect.left, enemies2[i].rect.top, 32, 32, "easyEnemy2"));
+		bigList.push_back(new Class_Enemy(enemy, lvl, enemies2[i].rect.left, enemies2[i].rect.top, 80, 50, "easyEnemy2"));
 	}
 	stones = lvl.GetObjects("Stone");
 	for (int i = 0; i < stones.size(); i++)
@@ -529,46 +713,6 @@ int main()
 			}
 		}
 
-		//===================================================FRAME SPRITE==================================================
-
-		if (Hobbit.life == true)
-		{
-			if (Hobbit.state == Hobbit.left) { Hobbit.sprite.setTextureRect(IntRect(0, 33, 32, 32)); }
-			if (Hobbit.state == Hobbit.right) { Hobbit.sprite.setTextureRect(IntRect(0, 0, 32, 32)); }
-			if (Hobbit.state == Hobbit.up) { Hobbit.sprite.setTextureRect(IntRect(0, 99, 32, 32)); }
-			if (Hobbit.state == Hobbit.down) { Hobbit.sprite.setTextureRect(IntRect(0, 66, 32, 32)); }
-
-			if (Keyboard::isKeyPressed(Keyboard::A))
-			{
-				frame += 0.005 * mainTime;
-				if (frame > 5) frame -= 5;
-				Hobbit.sprite.setTextureRect(IntRect(32 * int(frame), 33, 32, 32));
-			}
-			if (Keyboard::isKeyPressed(Keyboard::D))
-			{
-				frame += 0.005 * mainTime;
-				if (frame > 5) frame -= 5;
-				Hobbit.sprite.setTextureRect(IntRect(32 * int(frame), 0, 32, 32));
-			}
-			if (Keyboard::isKeyPressed(Keyboard::W))
-			{
-				frame += 0.005 * mainTime;
-				if (frame > 5) frame -= 5;
-				Hobbit.sprite.setTextureRect(IntRect(32 * int(frame), 66, 32, 32));
-			}
-			if (Keyboard::isKeyPressed(Keyboard::S))
-			{
-				frame += 0.005 * mainTime;
-				if (frame > 5) frame -= 5;
-				Hobbit.sprite.setTextureRect(IntRect(32 * int(frame), 99, 32, 32));
-			}
-		}
-		else
-		{
-			text3.setString("You Died");
-			text3.setPosition(viewCamera.getCenter().x - 200, viewCamera.getCenter().y - 90);
-			Hobbit.sprite.setTextureRect(IntRect(0, 98, 32, 32));
-		}
 
 		//================================================MAIN LOGIC FOR ALL (UPDATE)===============================================
 		Hobbit.update(mainTime);
@@ -593,17 +737,129 @@ int main()
 				{
 					if ((*Iterator)->name == "easyEnemy")
 					{
-						(*Iterator)->dx = 0;
-						Hobbit.health -= 35;
-						(*Iterator)->health = 0;
+						if ((*Iterator)->health > 0)
+						{
+							(*Iterator)->dx *= -1;
+							(*Iterator)->sprite.scale(-1, 1);
+
+							if (Hobbit.dx < 0 && Hobbit.hitDamage == true) 
+							{ 
+								Hobbit.hitDamage = false; Hobbit.TimerDamage = 0; Hobbit.health -= 5;
+								Hobbit.hitDamageGetOut1 = false; Hobbit.TimerDamageGetOut = 0;
+								Hobbit.x = (*Iterator)->x + (*Iterator)->w; cout << "I go on mob 111" << endl;
+							}
+							if (Hobbit.dx > 0 && Hobbit.hitDamage == true) 
+							{
+								Hobbit.hitDamage = false; Hobbit.TimerDamage = 0; Hobbit.health -= 5;
+								Hobbit.hitDamageGetOut2 = false; Hobbit.TimerDamageGetOut = 0;
+								Hobbit.x = (*Iterator)->x - Hobbit.w; cout << "I go on mob 222" << endl;
+							}
+							if (Hobbit.dy < 0 && Hobbit.hitDamage == true)
+							{
+								Hobbit.hitDamage = false; Hobbit.TimerDamage = 0; Hobbit.health -= 10;
+								Hobbit.hitDamageGetOut3 = false; Hobbit.TimerDamageGetOut = 0;
+								Hobbit.y = (*Iterator)->y + (*Iterator)->h;
+							}
+							if (Hobbit.dy > 0 && Hobbit.hitDamage == true)
+							{ 
+								Hobbit.hitDamage = false; Hobbit.TimerDamage = 0; Hobbit.health -= 10;
+								Hobbit.hitDamageGetOut4 = false; Hobbit.TimerDamageGetOut = 0;
+								Hobbit.y = (*Iterator)->y - Hobbit.h;
+							}
+
+
+							if ((*Iterator)->dx < 0 && Hobbit.hitDamage == true) //move right!
+							{ 
+								Hobbit.hitDamage = false; Hobbit.TimerDamage = 0; Hobbit.health -= 5;
+								Hobbit.hitDamageGetOut1 = false; Hobbit.TimerDamageGetOut = 0; cout << "Mob go on me 111" << endl;
+							}
+							if ((*Iterator)->dx > 0 && Hobbit.hitDamage == true) //move left!
+							{
+								Hobbit.hitDamage = false; Hobbit.TimerDamage = 0; Hobbit.health -= 5;
+								Hobbit.hitDamageGetOut2 = false; Hobbit.TimerDamageGetOut = 0; cout << "Mob go on me 222" << endl;
+							}
+							/*if ((*Iterator)->dy < 0 && Hobbit.hitDamage == true) 
+							{
+								Hobbit.hitDamage = false; Hobbit.TimerDamage = 0; Hobbit.health -= 10; cout << "f3" << endl;
+								Hobbit.hitDamageGetOut1 = false; Hobbit.TimerDamageGetOut = 0;
+							}
+							if ((*Iterator)->dy > 0 && Hobbit.hitDamage == true) 
+							{
+								Hobbit.hitDamage = false; Hobbit.TimerDamage = 0; Hobbit.health -= 10; cout << "f4" << endl;
+								Hobbit.hitDamageGetOut1 = false; Hobbit.TimerDamageGetOut = 0;
+							}*/
+						}
 					}
 					if ((*Iterator)->name == "easyEnemy2")
 					{
-						(*Iterator)->dx = 0;
-						Hobbit.health -= 50;
-						(*Iterator)->health = 0;
+						if ((*Iterator)->health > 0)
+						{
+							(*Iterator)->dy *= -1;
+							(*Iterator)->sprite.scale(-1, 1);
+
+							if (Hobbit.dx < 0 && Hobbit.hitDamage == true)
+							{
+								Hobbit.hitDamage = false; Hobbit.TimerDamage = 0; Hobbit.health -= 10;
+								Hobbit.hitDamageGetOut1 = false; Hobbit.TimerDamageGetOut = 0;
+								Hobbit.x = (*Iterator)->x + (*Iterator)->w;
+							}
+							if (Hobbit.dx > 0 && Hobbit.hitDamage == true)
+							{
+								Hobbit.hitDamage = false; Hobbit.TimerDamage = 0; Hobbit.health -= 10;
+								Hobbit.hitDamageGetOut2 = false; Hobbit.TimerDamageGetOut = 0;
+								Hobbit.x = (*Iterator)->x - Hobbit.w;
+							}
+							if (Hobbit.dy < 0 && Hobbit.hitDamage == true)
+							{
+								Hobbit.hitDamage = false; Hobbit.TimerDamage = 0; Hobbit.health -= 10;
+								Hobbit.hitDamageGetOut3 = false; Hobbit.TimerDamageGetOut = 0;
+								Hobbit.y = (*Iterator)->y + (*Iterator)->h; cout << "HOB go on mob 111" << endl;
+							}
+							if (Hobbit.dy > 0 && Hobbit.hitDamage == true)
+							{
+								Hobbit.hitDamage = false; Hobbit.TimerDamage = 0; Hobbit.health -= 10;
+								Hobbit.hitDamageGetOut4 = false; Hobbit.TimerDamageGetOut = 0;
+								Hobbit.y = (*Iterator)->y - Hobbit.h; cout << "HOB go on mob 222" << endl;
+							}
+
+
+							/*if ((*Iterator)->dx < 0 && Hobbit.hitDamage == true) 
+							{
+								Hobbit.hitDamage = false; Hobbit.TimerDamage = 0; Hobbit.health -= 10; cout << "11" << endl;
+								Hobbit.hitDamageGetOut1 = false; Hobbit.TimerDamageGetOut = 0;
+							}
+							if ((*Iterator)->dx > 0 && Hobbit.hitDamage == true) 
+							{
+								Hobbit.hitDamage = false; Hobbit.TimerDamage = 0; Hobbit.health -= 10; cout << "22" << endl;
+								Hobbit.hitDamageGetOut1 = false; Hobbit.TimerDamageGetOut = 0;
+							}*/
+							if ((*Iterator)->dy < 0 && Hobbit.hitDamage == true) 
+							{
+								Hobbit.hitDamage = false; Hobbit.TimerDamage = 0; Hobbit.health -= 10;
+								Hobbit.hitDamageGetOut3 = false; Hobbit.TimerDamageGetOut = 0; cout << "DRAGON go on HOB 111" << endl;
+							}
+							if ((*Iterator)->dy > 0 && Hobbit.hitDamage == true) 
+							{
+								Hobbit.hitDamage = false; Hobbit.TimerDamage = 0; Hobbit.health -= 10;
+								Hobbit.hitDamageGetOut4 = false; Hobbit.TimerDamageGetOut = 0; cout << "DRAGON go on HOB 222" << endl;
+							}
+						}
 					}
 				}
+				for (Iterator3 = bigList.begin(); Iterator3 != bigList.end(); Iterator3++)
+				{
+					if ((*Iterator)->getRect() != (*Iterator3)->getRect())
+					{
+						if (((*Iterator)->getRect().intersects((*Iterator3)->getRect())) && ((*Iterator)->name == "easyEnemy") && ((*Iterator3)->name == "easyEnemy"))
+						{
+							(*Iterator)->dx *= -1;
+							(*Iterator)->sprite.scale(-1, 1);
+							(*Iterator3)->dx *= -1;
+							(*Iterator3)->sprite.scale(-1, 1);
+						}
+					}
+				}
+
 				for (Iterator2 = bigList.begin(); Iterator2 != bigList.end(); Iterator2++)
 				{
 					if ((*Iterator)->getRect() != (*Iterator2)->getRect())
@@ -644,6 +900,12 @@ int main()
 				}
 			}
 		}
+		else
+		{
+			text3.setString("You Died");
+			text3.setPosition(viewCamera.getCenter().x - 200, viewCamera.getCenter().y - 90);
+			Hobbit.sprite.setTextureRect(IntRect(0, 98, 32, 32));
+		}
 
 
 		//===================================================MAIN DRAW==================================================
@@ -659,6 +921,7 @@ int main()
 		}
 		window.draw(Hobbit.sprite);
 
+		//===================================================INTERFACE==================================================
 		ostringstream PlayerHealth, scoreString, Mission;
 		PlayerHealth << Hobbit.health;
 		scoreString << Hobbit.stonesPoint;
