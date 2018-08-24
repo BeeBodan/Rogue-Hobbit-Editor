@@ -9,9 +9,9 @@ View getPlayerCoordXY(float x, float y)
 	float cordX = x, cordY = y;
 	
 	if (x < 320) cordX = 320;
-	if (y < 239) cordY = 239;
-	if (y > 615) cordY = 615;
-	if (x > 1100) cordX = 1100;
+	if (y < 240) cordY = 240;
+	if (y > 640) cordY = 640;
+	if (x > 1120) cordX = 1120;
 
 	viewCamera.setCenter(cordX, cordY);
 	return viewCamera;
