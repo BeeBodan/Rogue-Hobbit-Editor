@@ -131,36 +131,64 @@ public:
 		{
 			if (hitDamage == true)
 			{
-				if (state == left) { sprite.setTextureRect(IntRect(0, 33, 32, 32)); }
-				if (state == right) { sprite.setTextureRect(IntRect(0, 0, 32, 32)); }
-				if (state == up) { sprite.setTextureRect(IntRect(0, 99, 32, 32)); }
-				if (state == down) { sprite.setTextureRect(IntRect(0, 66, 32, 32)); }
+				if (state == left) { sprite.setTextureRect(IntRect(0, 35, 32, 35)); }
+				if (state == right) { sprite.setTextureRect(IntRect(0, 0, 32, 35)); }
+				if (state == up) { sprite.setTextureRect(IntRect(0, 105, 32, 35)); }
+				if (state == down) { sprite.setTextureRect(IntRect(0, 70, 32, 35)); }
 
 				if (Keyboard::isKeyPressed(Keyboard::A))
 				{
 					frame += 0.005 * mainTime;
 					if (frame > 5) frame -= 5;
-					sprite.setTextureRect(IntRect(32 * int(frame), 33, 32, 32));
+					sprite.setTextureRect(IntRect(32 * int(frame), 35, 32, 35));
 				}
 				if (Keyboard::isKeyPressed(Keyboard::D))
 				{
 					frame += 0.005 * mainTime;
 					if (frame > 5) frame -= 5;
-					sprite.setTextureRect(IntRect(32 * int(frame), 0, 32, 32));
+					sprite.setTextureRect(IntRect(32 * int(frame), 0, 32, 35));
 				}
 				if (Keyboard::isKeyPressed(Keyboard::W))
 				{
 					frame += 0.005 * mainTime;
 					if (frame > 5) frame -= 5;
-					sprite.setTextureRect(IntRect(32 * int(frame), 66, 32, 32));
+					sprite.setTextureRect(IntRect(32 * int(frame), 70, 32, 35));
 				}
 				if (Keyboard::isKeyPressed(Keyboard::S))
 				{
 					frame += 0.005 * mainTime;
 					if (frame > 5) frame -= 5;
-					sprite.setTextureRect(IntRect(32 * int(frame), 99, 32, 32));
+					sprite.setTextureRect(IntRect(32 * int(frame), 105, 32, 35));
 				}
 			}
+			if (hitDamageGetOut1 == false)
+			{
+				frame += 0.009 * mainTime;
+				if (frame > 5) frame -= 5;
+				sprite.setTextureRect(IntRect(32 * int(frame), 175, 32, 35));
+			}
+			if (hitDamageGetOut2 == false)
+			{
+				frame += 0.009 * mainTime;
+				if (frame > 5) frame -= 5;
+				sprite.setTextureRect(IntRect(32 * int(frame), 140, 32, 35));
+			}
+			if (hitDamageGetOut3 == false)
+			{
+				frame += 0.009 * mainTime;
+				if (frame > 5) frame -= 5;
+				sprite.setTextureRect(IntRect(32 * int(frame), 210, 32, 35));
+			}
+			if (hitDamageGetOut4 == false)
+			{
+				frame += 0.009 * mainTime;
+				if (frame > 5) frame -= 5;
+				sprite.setTextureRect(IntRect(32 * int(frame), 245, 32, 35));
+			}
+		}
+		else
+		{
+			sprite.setTextureRect(IntRect(0, 280, 38, 38));
 		}
 	}
 
@@ -281,7 +309,7 @@ public:
 		}
 
 		TimerDamage += mainTime;
-		if (TimerDamage > 2000)
+		if (TimerDamage > 1000)
 		{
 			hitDamage = true;
 		}
@@ -570,6 +598,14 @@ int main()
 	sprite_interface.setTexture(texture_interface);
 	sprite_interface.setTextureRect(IntRect(0, 0, 640, 480));
 
+	//_________Auch____________
+	Image auch_image;
+	auch_image.loadFromFile("images/Auch.png");
+	Texture auch_texture;
+	auch_texture.loadFromImage(auch_image);
+	Sprite auch_sprite;
+	auch_sprite.setTexture(auch_texture);
+	auch_sprite.setTextureRect(IntRect(0, 0, 32, 16));
 
 	//_________Load Map________
 	Level lvl;
@@ -600,7 +636,7 @@ int main()
 	sprite_elixir5.setTexture(texture_elixir5);
 
 	Image heroImage, shooting, objects, enemy;
-	heroImage.loadFromFile("images/CallMHero3.png");
+	heroImage.loadFromFile("images/HeroDmg.png");
 	objects.loadFromFile("images/object.png");
 	shooting.loadFromFile("images/shoot.png");
 	enemy.loadFromFile("images/dino.png");
@@ -899,7 +935,6 @@ int main()
 		{
 			text3.setString("You Died");
 			text3.setPosition(viewCamera.getCenter().x - 200, viewCamera.getCenter().y - 90);
-			Hobbit.sprite.setTextureRect(IntRect(0, 98, 32, 32));
 		}
 
 
@@ -971,6 +1006,12 @@ int main()
 			sprite_elixir5.setTextureRect(IntRect(0, 0, 83, 22));
 			sprite_elixir5.setPosition(viewCamera.getCenter().x + 180, viewCamera.getCenter().y - 138);
 			window.draw(sprite_elixir5);
+		}
+
+		if (Hobbit.hitDamage == false)
+		{
+			auch_sprite.setPosition(Hobbit.x + 10, Hobbit.y - 10);
+			window.draw(auch_sprite);
 		}
 
 		window.draw(text3);
